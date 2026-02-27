@@ -125,10 +125,10 @@ function Layout({ children }) {
                 {/* Top Navbar */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-xl)' }}>
                     <div>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Welcome back, Student 👋</p>
-                        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 600 }}>Overview</h1>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Welcome back, Student 👋</p>
+                        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em', marginTop: '4px' }}>Overview</h1>
                     </div>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                         <button
                             onClick={toggleTheme}
                             className="btn-icon"
@@ -136,16 +136,16 @@ function Layout({ children }) {
                         >
                             {theme === 'dark' ? <HiOutlineSun size={20} /> : <HiOutlineMoon size={20} />}
                         </button>
-                        <div style={{ width: 44, height: 44, borderRadius: 'var(--radius-md)', background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 600, color: 'white', boxShadow: 'var(--shadow-glow)', cursor: 'pointer' }}>
+                        <div style={{ width: 44, height: 44, borderRadius: 'var(--radius-full)', background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 700, color: 'white', boxShadow: 'var(--shadow-glow)', cursor: 'pointer', border: '2px solid rgba(255,255,255,0.2)' }}>
                             S
                         </div>
                     </div>
                 </div>
                 <motion.div
                     key={location.pathname}
-                    initial={{ opacity: 0, y: 12 }}
+                    initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
                 >
                     {children}
                 </motion.div>

@@ -157,8 +157,8 @@ function SavingsGoals() {
         <div className="page-container" style={{ padding: '0 20px 100px 20px' }}>
             <div className="page-header" style={{ marginBottom: '32px' }}>
                 <div>
-                    <h1 className="page-title">Savings Goals</h1>
-                    <p className="page-subtitle">Track your progress towards big purchases and financial targets</p>
+                    <h1 className="page-title" style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em', marginTop: '4px' }}>Savings Goals</h1>
+                    <p className="page-subtitle" style={{ letterSpacing: '0.2px' }}>Track your progress towards big purchases and financial targets</p>
                 </div>
                 <button
                     className="btn btn-primary"
@@ -174,78 +174,85 @@ function SavingsGoals() {
                     Loading goals...
                 </div>
             ) : goals.length === 0 ? (
-                <div className="glass-card empty-state">
-                    <HiOutlineStar className="empty-state-icon" style={{ color: 'var(--secondary-400)' }} />
-                    <h3>No Active Goals</h3>
-                    <p>Setting concrete financial goals makes you 10x more likely to save successfully.</p>
+                <div className="glass-card empty-state" style={{ padding: '48px 24px' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '50%', marginBottom: '16px' }}>
+                        <HiOutlineStar className="empty-state-icon" style={{ color: 'var(--accent-400)', fontSize: '48px', margin: 0 }} />
+                    </div>
+                    <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 700, marginBottom: '8px' }}>No Active Goals</h3>
+                    <p style={{ color: 'var(--text-secondary)', maxWidth: '400px', margin: '0 auto 24px auto', lineHeight: 1.6 }}>Setting concrete financial goals makes you 10x more likely to save successfully.</p>
                     <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
-                        Set a Goal Now
+                        <HiOutlinePlus size={18} /> Set a Goal Now
                     </button>
                 </div>
             ) : (
-                <div className="stats-grid">
+                <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
                     {goals.map(goal => (
                         <motion.div
                             key={goal._id}
-                            className="glass-card"
-                            style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
+                            className="glass-card-static"
+                            style={{ position: 'relative', display: 'flex', flexDirection: 'column', padding: '24px' }}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            whileHover={{ y: -4, backgroundColor: 'rgba(255,255,255,0.02)' }}
+                            transition={{ duration: 0.2 }}
                         >
                             {/* Category indicator line top */}
-                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: goal.color, borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0' }} />
+                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: goal.color, borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0' }} />
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                                 <div>
-                                    <h3 style={{ fontSize: '1.05rem', fontWeight: 600 }}>{goal.goalName}</h3>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                                    <h3 style={{ fontSize: '1.15rem', fontWeight: 700, fontFamily: 'var(--font-display)', marginBottom: '4px' }}>{goal.goalName}</h3>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                                         {goal.isCompleted ? (
-                                            <span style={{ color: 'var(--success-400)', display: 'flex', alignItems: 'center', gap: 4 }}><HiOutlineStar /> Goal Achieved!</span>
+                                            <span style={{ color: 'var(--success-400)', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}><HiOutlineStar size={14} /> Goal Achieved!</span>
                                         ) : (
                                             calculateDaysLeft(goal.deadline)
                                         )}
                                     </div>
                                 </div>
                                 <button
+                                    className="btn-icon"
                                     onClick={() => handleDeleteGoal(goal._id)}
-                                    style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                                    style={{ color: 'var(--accent-400)', width: '32px', height: '32px', border: 'none', background: 'transparent' }}
                                 >
                                     <HiOutlineTrash size={16} />
                                 </button>
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', margin: '24px 0' }}>
                                 <CircularProgress
                                     value={goal.currentAmount}
                                     max={goal.targetAmount}
                                     color={goal.isCompleted ? '#2ed573' : goal.color}
+                                    size={140}
                                 />
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', fontSize: '0.85rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', fontSize: '0.9rem' }}>
                                 <div>
-                                    <div style={{ color: 'var(--text-muted)' }}>Saved</div>
-                                    <div style={{ fontWeight: 600, fontFamily: 'var(--font-display)' }}>${goal.currentAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '4px' }}>Saved</div>
+                                    <div style={{ fontWeight: 700, fontFamily: 'var(--font-display)', fontSize: '1.2rem', color: 'var(--text-primary)' }}>${goal.currentAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
-                                    <div style={{ color: 'var(--text-muted)' }}>Target</div>
-                                    <div style={{ fontWeight: 600, fontFamily: 'var(--font-display)' }}>${goal.targetAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '4px' }}>Target</div>
+                                    <div style={{ fontWeight: 700, fontFamily: 'var(--font-display)', fontSize: '1.2rem', color: 'var(--text-primary)' }}>${goal.targetAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
                                 </div>
                             </div>
 
                             <button
                                 className="btn"
                                 style={{
-                                    marginTop: 'auto', width: '100%', justifyContent: 'center',
-                                    background: goal.isCompleted ? 'rgba(46, 213, 115, 0.1)' : 'var(--bg-glass-strong)',
-                                    color: goal.isCompleted ? 'var(--success-400)' : 'var(--text-primary)',
-                                    border: `1px solid ${goal.isCompleted ? 'rgba(46, 213, 115, 0.2)' : 'var(--border-glass)'}`,
-                                    cursor: goal.isCompleted ? 'default' : 'pointer'
+                                    marginTop: 'auto', width: '100%', justifyContent: 'center', padding: '12px', fontSize: '0.95rem', fontWeight: 600,
+                                    background: goal.isCompleted ? 'rgba(46, 213, 115, 0.1)' : 'var(--gradient-primary)',
+                                    color: goal.isCompleted ? 'var(--success-400)' : 'white',
+                                    border: goal.isCompleted ? '1px solid rgba(46, 213, 115, 0.2)' : 'none',
+                                    cursor: goal.isCompleted ? 'default' : 'pointer',
+                                    boxShadow: goal.isCompleted ? 'none' : '0 4px 12px rgba(108, 47, 255, 0.3)'
                                 }}
                                 disabled={goal.isCompleted}
                                 onClick={() => openAddFunds(goal)}
                             >
-                                {goal.isCompleted ? 'Completed' : <><HiOutlineCash size={16} /> Add Funds</>}
+                                {goal.isCompleted ? 'Completed' : <><HiOutlineCash size={18} /> Add Funds</>}
                             </button>
                         </motion.div>
                     ))}

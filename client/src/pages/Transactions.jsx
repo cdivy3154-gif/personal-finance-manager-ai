@@ -161,40 +161,44 @@ function Transactions() {
             {/* Header */}
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Transactions</h1>
-                    <p className="page-subtitle">Track your income and expenses</p>
+                    <h1 className="page-title" style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em', marginTop: '4px' }}>Transactions</h1>
+                    <p className="page-subtitle" style={{ letterSpacing: '0.2px' }}>Track your income and expenses</p>
                 </div>
                 <button className="btn btn-primary" onClick={() => openModal()}>
-                    <HiOutlinePlus /> Add Transaction
+                    <HiOutlinePlus size={18} /> Add Transaction
                 </button>
             </div>
 
             {/* Filters */}
-            <div className="filter-bar">
+            <div className="filter-bar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '16px', marginBottom: '8px', scrollbarWidth: 'none' }}>
                 <button
                     className={`filter-chip ${filter.type === '' ? 'active' : ''}`}
                     onClick={() => setFilter(f => ({ ...f, type: '' }))}
+                    style={{ padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600, border: '1px solid rgba(255,255,255,0.1)', background: filter.type === '' ? 'var(--gradient-primary)' : 'rgba(255,255,255,0.03)', color: filter.type === '' ? 'white' : 'var(--text-secondary)' }}
                 >
                     All
                 </button>
                 <button
                     className={`filter-chip ${filter.type === 'income' ? 'active' : ''}`}
                     onClick={() => setFilter(f => ({ ...f, type: 'income' }))}
+                    style={{ padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600, border: '1px solid rgba(255,255,255,0.1)', background: filter.type === 'income' ? 'var(--gradient-primary)' : 'rgba(255,255,255,0.03)', color: filter.type === 'income' ? 'white' : 'var(--text-secondary)' }}
                 >
                     💰 Income
                 </button>
                 <button
                     className={`filter-chip ${filter.type === 'expense' ? 'active' : ''}`}
                     onClick={() => setFilter(f => ({ ...f, type: 'expense' }))}
+                    style={{ padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600, border: '1px solid rgba(255,255,255,0.1)', background: filter.type === 'expense' ? 'var(--gradient-primary)' : 'rgba(255,255,255,0.03)', color: filter.type === 'expense' ? 'white' : 'var(--text-secondary)' }}
                 >
                     💸 Expenses
                 </button>
-                <span style={{ width: 1, height: 24, background: 'var(--border-glass)', margin: '0 4px' }} />
+                <div style={{ width: 1, height: 24, background: 'var(--border-glass)', margin: '0 8px', alignSelf: 'center' }} />
                 {CATEGORIES.map(cat => (
                     <button
                         key={cat}
                         className={`filter-chip ${filter.category === cat ? 'active' : ''}`}
                         onClick={() => setFilter(f => ({ ...f, category: f.category === cat ? '' : cat }))}
+                        style={{ padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600, border: '1px solid rgba(255,255,255,0.1)', background: filter.category === cat ? 'var(--gradient-primary)' : 'rgba(255,255,255,0.03)', color: filter.category === cat ? 'white' : 'var(--text-secondary)' }}
                     >
                         {cat}
                     </button>
@@ -215,12 +219,13 @@ function Transactions() {
                             {transactions.map((tx, index) => (
                                 <motion.div
                                     key={tx._id}
-                                    className="transaction-item"
+                                    className="transaction-item glass-card-static"
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, x: -20 }}
                                     transition={{ delay: index * 0.03 }}
-                                    whileHover={{ x: 4 }}
+                                    whileHover={{ x: 6, backgroundColor: 'rgba(255,255,255,0.02)' }}
+                                    style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}
                                 >
                                     <div
                                         className="transaction-icon"
@@ -235,28 +240,28 @@ function Transactions() {
                                     >
                                         {tx.type === 'income' ? <HiOutlineTrendingUp /> : <HiOutlineTrendingDown />}
                                     </div>
-                                    <div className="transaction-info">
-                                        <div className="transaction-desc">{tx.description}</div>
-                                        <div className="transaction-meta">
-                                            <span className={`category-badge ${tx.category}`}>{tx.category}</span>
+                                    <div className="transaction-info" style={{ flex: 1 }}>
+                                        <div className="transaction-desc" style={{ fontWeight: 600, fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '4px' }}>{tx.description}</div>
+                                        <div className="transaction-meta" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                            <span className={`category-badge ${tx.category}`} style={{ padding: '2px 8px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: CATEGORY_COLORS[tx.category] || 'var(--text-secondary)' }}>{tx.category}</span>
                                             <span>•</span>
                                             <span>{formatDate(tx.date)}</span>
                                         </div>
                                     </div>
-                                    <div className={`transaction-amount ${tx.type}`}>
+                                    <div className={`transaction-amount ${tx.type}`} style={{ fontSize: '1.15rem', fontWeight: 800, marginRight: '16px', color: tx.type === 'income' ? 'var(--success-400)' : 'var(--text-primary)' }}>
                                         {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
                                     </div>
-                                    <div className="transaction-actions">
-                                        <button className="btn-icon" onClick={() => openModal(tx)} title="Edit">
-                                            <HiOutlinePencil size={16} />
+                                    <div className="transaction-actions" style={{ display: 'flex', gap: '8px' }}>
+                                        <button className="btn-icon" onClick={() => openModal(tx)} title="Edit" style={{ width: '32px', height: '32px' }}>
+                                            <HiOutlinePencil size={14} />
                                         </button>
                                         <button
                                             className="btn-icon"
                                             onClick={() => handleDelete(tx._id)}
                                             title="Delete"
-                                            style={{ color: 'var(--accent-400)' }}
+                                            style={{ color: 'var(--accent-400)', width: '32px', height: '32px', borderColor: 'rgba(255,71,87,0.2)' }}
                                         >
-                                            <HiOutlineTrash size={16} />
+                                            <HiOutlineTrash size={14} />
                                         </button>
                                     </div>
                                 </motion.div>
@@ -325,12 +330,12 @@ function Transactions() {
                             </div>
 
                             <form onSubmit={handleSubmit}>
-                                {/* Type Toggle */}
-                                <div className="tabs" style={{ marginBottom: 20 }}>
+                                <div className="tabs" style={{ display: 'flex', gap: '8px', marginBottom: 24, padding: '4px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                     <button
                                         type="button"
                                         className={`tab ${form.type === 'expense' ? 'active' : ''}`}
                                         onClick={() => setForm(f => ({ ...f, type: 'expense', category: '' }))}
+                                        style={{ flex: 1, padding: '10px', borderRadius: '8px', fontWeight: 600, transition: 'all 0.2s', background: form.type === 'expense' ? 'rgba(255,255,255,0.1)' : 'transparent', color: form.type === 'expense' ? 'white' : 'var(--text-muted)' }}
                                     >
                                         💸 Expense
                                     </button>
@@ -338,6 +343,7 @@ function Transactions() {
                                         type="button"
                                         className={`tab ${form.type === 'income' ? 'active' : ''}`}
                                         onClick={() => setForm(f => ({ ...f, type: 'income', category: 'Income' }))}
+                                        style={{ flex: 1, padding: '10px', borderRadius: '8px', fontWeight: 600, transition: 'all 0.2s', background: form.type === 'income' ? 'rgba(255,255,255,0.1)' : 'transparent', color: form.type === 'income' ? 'white' : 'var(--text-muted)' }}
                                     >
                                         💰 Income
                                     </button>

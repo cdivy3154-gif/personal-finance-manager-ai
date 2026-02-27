@@ -20,13 +20,17 @@ function App() {
             <Toaster
                 position="top-right"
                 toastOptions={{
-                    duration: 3000,
+                    duration: 4000,
                     className: 'toast-custom',
                     style: {
-                        background: '#12122a',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        color: '#f0f0ff',
+                        background: 'rgba(10, 12, 22, 0.95)',
+                        backdropFilter: 'blur(16px)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        color: 'var(--text-primary)',
                         borderRadius: '12px',
+                        fontFamily: 'var(--font-primary)',
+                        fontSize: '0.9rem',
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
                     },
                 }}
             />

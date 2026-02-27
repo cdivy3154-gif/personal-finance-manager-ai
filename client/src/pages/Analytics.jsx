@@ -27,17 +27,21 @@ const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
         return (
             <div style={{
-                background: '#1a1a3a',
-                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'rgba(10, 12, 22, 0.95)',
+                backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255,255,255,0.08)',
                 borderRadius: '12px',
-                padding: '10px 14px',
-                fontSize: '0.8rem',
+                padding: '12px 16px',
+                fontSize: '0.85rem',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
             }}>
-                <p style={{ color: '#f0f0ff', fontWeight: 600, marginBottom: 4 }}>{label}</p>
+                <p style={{ color: 'var(--text-primary)', fontWeight: 700, marginBottom: 8, fontFamily: 'var(--font-display)', fontSize: '0.95rem' }}>{label}</p>
                 {payload.map((entry, i) => (
-                    <p key={i} style={{ color: entry.color }}>
-                        {entry.name}: ${entry.value?.toFixed(2)}
-                    </p>
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: entry.color }} />
+                        <span style={{ color: 'var(--text-secondary)' }}>{entry.name}:</span>
+                        <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>${entry.value?.toFixed(2)}</span>
+                    </div>
                 ))}
             </div>
         );
@@ -142,31 +146,32 @@ function Analytics() {
     return (
         <div>
             {/* Header */}
-            <div className="page-header">
+            <div className="page-header" style={{ marginBottom: '24px' }}>
                 <div>
-                    <h1 className="page-title">Analytics</h1>
-                    <p className="page-subtitle">Deep dive into your spending patterns</p>
+                    <h1 className="page-title" style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em', marginTop: '4px' }}>Analytics</h1>
+                    <p className="page-subtitle" style={{ letterSpacing: '0.2px' }}>Deep dive into your spending patterns</p>
                 </div>
             </div>
 
             {/* Month Picker */}
-            <div className="month-picker" style={{ marginBottom: 24 }}>
-                <button onClick={() => changeMonth(-1)}>
+            <div className="month-picker" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: 32, fontSize: '1.1rem', fontWeight: 600 }}>
+                <button className="btn-icon" onClick={() => changeMonth(-1)} style={{ width: '36px', height: '36px', borderRadius: '50%' }}>
                     <HiOutlineChevronLeft />
                 </button>
-                <span>{formatMonthDisplay(month)}</span>
-                <button onClick={() => changeMonth(1)}>
+                <span style={{ minWidth: '140px', textAlign: 'center' }}>{formatMonthDisplay(month)}</span>
+                <button className="btn-icon" onClick={() => changeMonth(1)} style={{ width: '36px', height: '36px', borderRadius: '50%' }}>
                     <HiOutlineChevronRight />
                 </button>
             </div>
 
             {/* Tab Navigation */}
-            <div className="tabs">
+            <div className="tabs" style={{ display: 'flex', gap: '8px', marginBottom: 32, padding: '4px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', width: 'fit-content' }}>
                 {['overview', 'trends', 'budget'].map(tab => (
                     <button
                         key={tab}
                         className={`tab ${activeTab === tab ? 'active' : ''}`}
                         onClick={() => setActiveTab(tab)}
+                        style={{ padding: '8px 24px', borderRadius: '8px', fontWeight: 600, transition: 'all 0.2s', background: activeTab === tab ? 'rgba(255,255,255,0.1)' : 'transparent', color: activeTab === tab ? 'white' : 'var(--text-muted)' }}
                     >
                         {tab.charAt(0).toUpperCase() + tab.slice(1)}
                     </button>
@@ -198,8 +203,8 @@ function Analytics() {
 
                     <div className="grid-2">
                         {/* Category Breakdown Pie */}
-                        <div className="glass-card">
-                            <h3 className="chart-title" style={{ marginBottom: 16 }}>Spending Distribution</h3>
+                        <div className="glass-card-static" style={{ padding: '24px' }}>
+                            <h3 className="chart-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.2rem', marginBottom: 24 }}>Spending Distribution</h3>
                             {pieData.length > 0 ? (
                                 <>
                                     <ResponsiveContainer width="100%" height={260}>
@@ -208,11 +213,12 @@ function Analytics() {
                                                 data={pieData}
                                                 cx="50%"
                                                 cy="50%"
-                                                innerRadius={60}
+                                                innerRadius={65}
                                                 outerRadius={95}
-                                                paddingAngle={3}
+                                                paddingAngle={4}
                                                 dataKey="value"
                                                 animationDuration={800}
+                                                stroke="none"
                                             >
                                                 {pieData.map((entry, i) => (
                                                     <Cell key={i} fill={entry.color} stroke="transparent" />
@@ -221,22 +227,22 @@ function Analytics() {
                                             <Tooltip content={<CustomTooltip />} />
                                         </PieChart>
                                     </ResponsiveContainer>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
                                         {pieData.map((cat, i) => {
                                             const total = pieData.reduce((s, c) => s + c.value, 0);
                                             const pct = ((cat.value / total) * 100).toFixed(1);
                                             return (
-                                                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                                         <span style={{
-                                                            width: 10, height: 10, borderRadius: '50%',
+                                                            width: 12, height: 12, borderRadius: '4px',
                                                             background: cat.color, display: 'inline-block'
                                                         }} />
-                                                        <span style={{ fontSize: '0.85rem' }}>{cat.name}</span>
+                                                        <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-primary)' }}>{cat.name}</span>
                                                     </div>
-                                                    <div style={{ display: 'flex', gap: 16, fontSize: '0.85rem' }}>
-                                                        <span style={{ color: 'var(--text-secondary)' }}>{pct}%</span>
-                                                        <span style={{ fontWeight: 600 }}>{formatCurrency(cat.value)}</span>
+                                                    <div style={{ display: 'flex', gap: 16, fontSize: '0.9rem', alignItems: 'center' }}>
+                                                        <span style={{ color: 'var(--text-muted)' }}>{pct}%</span>
+                                                        <span style={{ fontWeight: 600, fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>{formatCurrency(cat.value)}</span>
                                                     </div>
                                                 </div>
                                             );
@@ -251,18 +257,18 @@ function Analytics() {
                         </div>
 
                         {/* Daily Spending */}
-                        <div className="glass-card">
-                            <h3 className="chart-title" style={{ marginBottom: 16 }}>Daily Spending</h3>
+                        <div className="glass-card-static" style={{ padding: '24px' }}>
+                            <h3 className="chart-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.2rem', marginBottom: 24 }}>Daily Spending</h3>
                             {dailyTrendData.length > 0 ? (
                                 <ResponsiveContainer width="100%" height={380}>
-                                    <AreaChart data={dailyTrendData}>
+                                    <AreaChart data={dailyTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                         <defs>
                                             <linearGradient id="colorDailyAnalytics" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#6c2fff" stopOpacity={0.3} />
-                                                <stop offset="95%" stopColor="#6c2fff" stopOpacity={0} />
+                                                <stop offset="5%" stopColor="var(--primary-400)" stopOpacity={0.4} />
+                                                <stop offset="95%" stopColor="var(--primary-400)" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
-                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                                         <XAxis dataKey="day" tick={{ fontSize: 11 }} />
                                         <YAxis tick={{ fontSize: 11 }} />
                                         <Tooltip content={<CustomTooltip />} />
@@ -312,18 +318,18 @@ function Analytics() {
             {/* Trends Tab */}
             {activeTab === 'trends' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                    <div className="glass-card" style={{ marginBottom: 24 }}>
-                        <h3 className="chart-title" style={{ marginBottom: 16 }}>Income vs Expenses (Last 6 Months)</h3>
+                    <div className="glass-card-static" style={{ marginBottom: 24, padding: '24px' }}>
+                        <h3 className="chart-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.2rem', marginBottom: 24 }}>Income vs Expenses (Last 6 Months)</h3>
                         {monthlyTrendData.length > 0 ? (
                             <ResponsiveContainer width="100%" height={350}>
-                                <BarChart data={monthlyTrendData} barGap={4}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                                    <YAxis tick={{ fontSize: 11 }} />
-                                    <Tooltip content={<CustomTooltip />} />
-                                    <Legend />
-                                    <Bar dataKey="income" name="Income" fill="#2ed573" radius={[6, 6, 0, 0]} />
-                                    <Bar dataKey="expense" name="Expenses" fill="#ff4757" radius={[6, 6, 0, 0]} />
+                                <BarChart data={monthlyTrendData} barGap={8} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} dy={10} />
+                                    <YAxis tick={{ fontSize: 12, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} dx={-10} />
+                                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
+                                    <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+                                    <Bar dataKey="income" name="Income" fill="var(--success-400)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                                    <Bar dataKey="expense" name="Expenses" fill="var(--accent-400)" radius={[4, 4, 0, 0]} maxBarSize={40} />
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
@@ -333,16 +339,16 @@ function Analytics() {
                         )}
                     </div>
 
-                    <div className="glass-card">
-                        <h3 className="chart-title" style={{ marginBottom: 16 }}>Spending Flow (Last 6 Months)</h3>
+                    <div className="glass-card-static" style={{ padding: '24px' }}>
+                        <h3 className="chart-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.2rem', marginBottom: 24 }}>Spending Flow (Last 6 Months)</h3>
                         {monthlyTrendData.length > 0 ? (
                             <ResponsiveContainer width="100%" height={300}>
-                                <LineChart data={monthlyTrendData}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                                    <YAxis tick={{ fontSize: 11 }} />
-                                    <Tooltip content={<CustomTooltip />} />
-                                    <Legend />
+                                <LineChart data={monthlyTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} dy={10} />
+                                    <YAxis tick={{ fontSize: 12, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} dx={-10} />
+                                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                                    <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
                                     <Line
                                         type="monotone"
                                         dataKey="income"
@@ -356,10 +362,10 @@ function Analytics() {
                                         type="monotone"
                                         dataKey="expense"
                                         name="Expenses"
-                                        stroke="#ff4757"
-                                        strokeWidth={2.5}
-                                        dot={{ fill: '#ff4757', r: 5 }}
-                                        activeDot={{ r: 7 }}
+                                        stroke="var(--accent-400)"
+                                        strokeWidth={3}
+                                        dot={{ fill: 'var(--accent-400)', r: 4, strokeWidth: 0 }}
+                                        activeDot={{ r: 6, stroke: 'rgba(255,71,87,0.3)', strokeWidth: 4 }}
                                     />
                                 </LineChart>
                             </ResponsiveContainer>
@@ -375,18 +381,18 @@ function Analytics() {
             {/* Budget Tab */}
             {activeTab === 'budget' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                    <div className="glass-card">
-                        <h3 className="chart-title" style={{ marginBottom: 16 }}>Budget vs Actual Spending</h3>
+                    <div className="glass-card-static" style={{ padding: '24px' }}>
+                        <h3 className="chart-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.2rem', marginBottom: 24 }}>Budget vs Actual Spending</h3>
                         {budgetVsActual.length > 0 ? (
                             <ResponsiveContainer width="100%" height={400}>
-                                <BarChart data={budgetVsActual} layout="vertical" barGap={4}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis type="number" tick={{ fontSize: 11 }} />
-                                    <YAxis dataKey="name" type="category" tick={{ fontSize: 12 }} width={100} />
-                                    <Tooltip content={<CustomTooltip />} />
-                                    <Legend />
-                                    <Bar dataKey="budget" name="Budget" fill="rgba(108,47,255,0.4)" radius={[0, 6, 6, 0]} />
-                                    <Bar dataKey="actual" name="Actual" fill="#a855f7" radius={[0, 6, 6, 0]} />
+                                <BarChart data={budgetVsActual} layout="vertical" barGap={6} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
+                                    <XAxis type="number" tick={{ fontSize: 12, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} dy={10} />
+                                    <YAxis dataKey="name" type="category" tick={{ fontSize: 12, fill: 'var(--text-primary)', fontWeight: 500 }} axisLine={false} tickLine={false} width={110} dx={-10} />
+                                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
+                                    <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+                                    <Bar dataKey="budget" name="Budget Limit" fill="rgba(255,255,255,0.1)" radius={[0, 4, 4, 0]} maxBarSize={24} />
+                                    <Bar dataKey="actual" name="Actual Spent" fill="var(--primary-400)" radius={[0, 4, 4, 0]} maxBarSize={24} />
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (

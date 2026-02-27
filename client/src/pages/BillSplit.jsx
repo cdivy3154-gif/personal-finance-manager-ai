@@ -140,8 +140,8 @@ function BillSplit() {
         <div className="page-container" style={{ padding: '0 20px 100px 20px' }}>
             <div className="page-header" style={{ marginBottom: '32px' }}>
                 <div>
-                    <h1 className="page-title">Bill Split</h1>
-                    <p className="page-subtitle">Split expenses fairly with roommates and friends</p>
+                    <h1 className="page-title" style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em', marginTop: '4px' }}>Bill Split</h1>
+                    <p className="page-subtitle" style={{ letterSpacing: '0.2px' }}>Split expenses fairly with roommates and friends</p>
                 </div>
                 <button
                     className="btn btn-primary"
@@ -157,55 +157,61 @@ function BillSplit() {
                     Loading splits...
                 </div>
             ) : bills.length === 0 ? (
-                <div className="glass-card empty-state">
-                    <HiOutlineUsers className="empty-state-icon" style={{ color: 'var(--primary-400)' }} />
-                    <h3>No Active Splits</h3>
-                    <p>Create a group expense to start splitting bills with your friends securely.</p>
+                <div className="glass-card empty-state" style={{ padding: '48px 24px' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '50%', marginBottom: '16px' }}>
+                        <HiOutlineUsers className="empty-state-icon" style={{ color: 'var(--primary-400)', fontSize: '48px', margin: 0 }} />
+                    </div>
+                    <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 700, marginBottom: '8px' }}>No Active Splits</h3>
+                    <p style={{ color: 'var(--text-secondary)', maxWidth: '400px', margin: '0 auto 24px auto', lineHeight: 1.6 }}>Create a group expense to start splitting bills with your friends securely.</p>
                     <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-                        Split a Bill Now
+                        <HiOutlinePlus size={18} /> Split a Bill Now
                     </button>
                 </div>
             ) : (
-                <div className="grid-2">
+                <div className="grid-2" style={{ gap: '24px' }}>
                     {bills.map(bill => (
                         <motion.div
                             key={bill._id}
-                            className="glass-card"
+                            className="glass-card-static"
+                            style={{ padding: '24px' }}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
+                            whileHover={{ y: -4, backgroundColor: 'rgba(255,255,255,0.02)' }}
+                            transition={{ duration: 0.2 }}
                         >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                                 <div>
-                                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-display)', marginBottom: '8px' }}>
                                         {bill.description}
                                     </h3>
-                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <span>{new Date(bill.createdAt).toLocaleDateString()}</span>
                                         <span style={{
                                             padding: '2px 8px',
                                             borderRadius: '12px',
                                             fontSize: '0.7rem',
-                                            fontWeight: 600,
+                                            fontWeight: 700,
                                             backgroundColor: bill.status === 'settled' ? 'rgba(46, 213, 115, 0.15)' :
                                                 bill.status === 'partially' ? 'rgba(255, 165, 2, 0.15)' : 'rgba(255, 71, 87, 0.15)',
                                             color: bill.status === 'settled' ? 'var(--success-400)' :
-                                                bill.status === 'partially' ? 'var(--warning-400)' : 'var(--accent-400)',
+                                                bill.status === 'partially' ? '#ffa502' : 'var(--accent-400)',
                                             textTransform: 'uppercase'
                                         }}>
                                             {bill.status}
                                         </span>
                                     </div>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                                     <div style={{ textAlign: 'right' }}>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Total</div>
-                                        <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary-300)' }}>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Total</div>
+                                        <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary-300)' }}>
                                             ${bill.totalAmount.toFixed(2)}
                                         </div>
                                     </div>
                                     <button
                                         onClick={() => handleDeleteBill(bill._id)}
-                                        style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
+                                        className="btn-icon"
+                                        style={{ background: 'transparent', border: 'none', color: 'var(--accent-400)', width: '36px', height: '36px' }}
                                         title="Delete Bill"
                                     >
                                         <HiOutlineTrash size={18} />
@@ -213,55 +219,54 @@ function BillSplit() {
                                 </div>
                             </div>
 
-                            <div style={{ borderTop: '1px solid var(--border-glass)', paddingTop: '16px' }}>
-                                <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                    Participants ({bill.participants.length})
+                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
+                                <p style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <HiOutlineUsers /> Participants ({bill.participants.length})
                                 </p>
 
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                     {bill.participants.map((p, i) => (
                                         <div key={i} style={{
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                            padding: '10px 12px',
-                                            background: p.isPaid ? 'rgba(46, 213, 115, 0.05)' : 'var(--bg-glass-strong)',
-                                            borderRadius: '8px',
-                                            border: p.isPaid ? '1px solid rgba(46, 213, 115, 0.2)' : '1px solid transparent'
+                                            padding: '12px 16px',
+                                            background: p.isPaid ? 'rgba(46, 213, 115, 0.05)' : 'rgba(255,255,255,0.02)',
+                                            borderRadius: '12px',
+                                            border: p.isPaid ? '1px solid rgba(46, 213, 115, 0.2)' : '1px solid rgba(255,255,255,0.05)'
                                         }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                 <div style={{
-                                                    width: 32, height: 32, borderRadius: '50%',
-                                                    background: p.name === 'Me' ? 'var(--gradient-primary)' : 'var(--bg-secondary)',
+                                                    width: 36, height: 36, borderRadius: '50%',
+                                                    background: p.name === 'Me' ? 'var(--gradient-primary)' : 'rgba(255,255,255,0.1)',
                                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    fontSize: '0.8rem', fontWeight: 600, color: 'white',
-                                                    border: '1px solid var(--border-glass)'
+                                                    fontSize: '0.9rem', fontWeight: 700, color: 'white',
                                                 }}>
                                                     {p.name.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <p style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-primary)' }}>{p.name}</p>
-                                                    <p style={{ fontSize: '0.75rem', color: p.isPaid ? 'var(--success-400)' : 'var(--accent-400)' }}>
+                                                    <p style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>{p.name}</p>
+                                                    <p style={{ fontSize: '0.8rem', color: p.isPaid ? 'var(--success-400)' : 'var(--accent-400)', fontWeight: 500, marginTop: '2px' }}>
                                                         {p.isPaid ? 'Settled' : 'Owes'}
                                                     </p>
                                                 </div>
                                             </div>
 
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <span style={{ fontSize: '0.95rem', fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                                <span style={{ fontSize: '1.05rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
                                                     ${p.amountOwed.toFixed(2)}
                                                 </span>
 
                                                 {!p.isPaid && (
                                                     <button
                                                         className="btn btn-icon"
-                                                        style={{ width: 32, height: 32, borderColor: 'rgba(46, 213, 115, 0.3)', color: 'var(--success-400)' }}
+                                                        style={{ width: 36, height: 36, borderColor: 'rgba(46, 213, 115, 0.3)', color: 'var(--success-400)', background: 'rgba(46, 213, 115, 0.05)' }}
                                                         onClick={() => handleSettleParticipant(bill._id, p.name)}
                                                         title="Mark as Paid"
                                                     >
-                                                        <HiOutlineCheck size={16} />
+                                                        <HiOutlineCheck size={18} />
                                                     </button>
                                                 )}
                                                 {p.isPaid && (
-                                                    <div style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success-400)' }}>
+                                                    <div style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success-400)', background: 'rgba(46, 213, 115, 0.1)', borderRadius: '50%' }}>
                                                         <HiOutlineCheck size={20} />
                                                     </div>
                                                 )}

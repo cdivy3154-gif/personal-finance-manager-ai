@@ -115,10 +115,10 @@ function Budget() {
             {/* Page Header */}
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Budget</h1>
-                    <p className="page-subtitle">Set and track your monthly spending limits</p>
+                    <h1 className="page-title" style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em', marginTop: '4px' }}>Budget</h1>
+                    <p className="page-subtitle" style={{ letterSpacing: '0.2px' }}>Set and track your monthly spending limits</p>
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 12 }}>
                     {editing ? (
                         <>
                             <button className="btn btn-secondary" onClick={() => { setEditing(false); setForm({ totalBudget: budget.totalBudget?.toString() || '', categories: { ...budget.categories } }); }}>
@@ -137,12 +137,12 @@ function Budget() {
             </div>
 
             {/* Month Picker */}
-            <div className="month-picker" style={{ marginBottom: 24 }}>
-                <button onClick={() => changeMonth(-1)}>
+            <div className="month-picker" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: 24, fontSize: '1.1rem', fontWeight: 600 }}>
+                <button className="btn-icon" onClick={() => changeMonth(-1)} style={{ width: '36px', height: '36px', borderRadius: '50%' }}>
                     <HiOutlineChevronLeft />
                 </button>
-                <span>{formatMonthDisplay(month)}</span>
-                <button onClick={() => changeMonth(1)}>
+                <span style={{ minWidth: '140px', textAlign: 'center' }}>{formatMonthDisplay(month)}</span>
+                <button className="btn-icon" onClick={() => changeMonth(1)} style={{ width: '36px', height: '36px', borderRadius: '50%' }}>
                     <HiOutlineChevronRight />
                 </button>
             </div>
@@ -155,8 +155,9 @@ function Budget() {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.1 }}
+                    style={{ padding: '12px 16px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', background: alert.type === 'error' ? 'rgba(255,107,107,0.15)' : 'rgba(255,165,2,0.15)', border: `1px solid ${alert.type === 'error' ? 'rgba(255,107,107,0.3)' : 'rgba(255,165,2,0.3)'}`, color: alert.type === 'error' ? '#ff6b6b' : '#ffa502', fontWeight: 500, fontSize: '0.9rem' }}
                 >
-                    <HiOutlineExclamation size={20} />
+                    <HiOutlineExclamation size={22} />
                     {alert.message}
                 </motion.div>
             ))}
@@ -209,10 +210,10 @@ function Budget() {
             </motion.div>
 
             {/* Category Budgets */}
-            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, marginBottom: 16 }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.2rem', marginBottom: 16 }}>
                 Category Budgets
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
                 {CATEGORIES.map((cat, index) => {
                     const catUtil = utilization?.categories?.find(c => c.category === cat);
                     return (
@@ -224,46 +225,46 @@ function Budget() {
                             transition={{ delay: index * 0.05 }}
                             style={{ padding: '16px 20px' }}
                         >
-                            <div className="budget-progress">
-                                <div className="budget-progress-header">
-                                    <span className="budget-progress-label">
-                                        <span>{CATEGORY_EMOJIS[cat]}</span>
-                                        <span>{cat}</span>
-                                        {catUtil?.overBudget && (
-                                            <span style={{ color: 'var(--accent-400)', fontSize: '0.7rem', fontWeight: 700 }}>
-                                                OVER
-                                            </span>
-                                        )}
-                                    </span>
-                                    <span className="budget-progress-values">
-                                        {editing ? (
-                                            <input
-                                                type="number"
-                                                className="form-input"
-                                                style={{ width: 100, padding: '6px 10px', textAlign: 'right', fontSize: '0.8rem' }}
-                                                placeholder="0"
-                                                value={form.categories[cat] || ''}
-                                                onChange={(e) => setForm(f => ({
-                                                    ...f,
-                                                    categories: { ...f.categories, [cat]: e.target.value }
-                                                }))}
-                                            />
-                                        ) : (
-                                            `${formatCurrency(catUtil?.spent)} / ${formatCurrency(catUtil?.budgetLimit)}`
-                                        )}
-                                    </span>
-                                </div>
-                                {!editing && (
-                                    <div className="budget-progress-bar-bg">
-                                        <motion.div
-                                            className={`budget-progress-bar ${getProgressColor(catUtil?.status)}`}
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${Math.min(catUtil?.percentage || 0, 100)}%` }}
-                                            transition={{ duration: 0.8, delay: index * 0.05 }}
+                            <div className="budget-progress-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                <span className="budget-progress-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, fontSize: '0.95rem' }}>
+                                    <span style={{ background: 'rgba(255,255,255,0.05)', padding: '6px', borderRadius: '8px', display: 'flex' }}>{CATEGORY_EMOJIS[cat]}</span>
+                                    <span>{cat}</span>
+                                    {catUtil?.overBudget && (
+                                        <span style={{ color: 'var(--accent-400)', fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', background: 'rgba(255,107,107,0.15)', borderRadius: '12px', minWidth: 'max-content' }}>
+                                            OVER
+                                        </span>
+                                    )}
+                                </span>
+                                <span className="budget-progress-values" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                                    {editing ? (
+                                        <input
+                                            type="number"
+                                            className="form-input"
+                                            style={{ width: 100, padding: '8px 12px', textAlign: 'right', fontSize: '0.9rem' }}
+                                            placeholder="0"
+                                            value={form.categories[cat] || ''}
+                                            onChange={(e) => setForm(f => ({
+                                                ...f,
+                                                categories: { ...f.categories, [cat]: e.target.value }
+                                            }))}
                                         />
-                                    </div>
-                                )}
+                                    ) : (
+                                        <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{formatCurrency(catUtil?.spent)}</span>
+                                    )}
+                                    {!editing && ` / ${formatCurrency(catUtil?.budgetLimit)}`}
+                                </span>
                             </div>
+                            {!editing && (
+                                <div className="budget-progress-bar-bg" style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+                                    <motion.div
+                                        className={`budget-progress-bar ${getProgressColor(catUtil?.status)}`}
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${Math.min(catUtil?.percentage || 0, 100)}%` }}
+                                        transition={{ duration: 0.8, delay: index * 0.05 }}
+                                        style={{ height: '100%', borderRadius: '4px', background: catUtil?.status === 'exceeded' ? 'var(--accent-400)' : catUtil?.status === 'warning' ? '#f97316' : catUtil?.status === 'caution' ? '#facc15' : 'var(--success-400)' }}
+                                    />
+                                </div>
+                            )}
                         </motion.div>
                     );
                 })}

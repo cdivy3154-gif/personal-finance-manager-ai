@@ -46,14 +46,18 @@ const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
         return (
             <div style={{
-                background: '#1a1a3a',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '12px',
-                padding: '10px 14px',
-                fontSize: '0.8rem',
+                background: 'rgba(10, 12, 22, 0.85)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '16px',
+                padding: '12px 16px',
+                fontSize: '0.85rem',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                color: '#f8fafc'
             }}>
-                <p style={{ color: '#f0f0ff', fontWeight: 600 }}>{payload[0].name || ''}</p>
-                <p style={{ color: payload[0].color || '#a855f7' }}>
+                <p style={{ fontWeight: 600, letterSpacing: '0.5px', marginBottom: '4px' }}>{payload[0].name || ''}</p>
+                <p style={{ color: payload[0].color || 'var(--primary-400)', fontSize: '1.1rem', fontWeight: 700 }}>
                     ${payload[0].value?.toFixed(2)}
                 </p>
             </div>
@@ -142,13 +146,13 @@ function Dashboard() {
                     <motion.h1 variants={cardVariants} className="page-title">
                         Dashboard
                     </motion.h1>
-                    <motion.p variants={cardVariants} className="page-subtitle">
+                    <motion.p variants={cardVariants} className="page-subtitle" style={{ letterSpacing: '0.2px' }}>
                         Your financial overview at a glance
                     </motion.p>
                 </div>
                 <motion.div variants={cardVariants}>
                     <Link to="/transactions" className="btn btn-primary">
-                        <HiOutlineCash />
+                        <HiOutlineCash size={18} />
                         Add Transaction
                     </Link>
                 </motion.div>
@@ -252,9 +256,9 @@ function Dashboard() {
                             </div>
                         )}
                         {/* Category Legend */}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginTop: '8px' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginTop: '16px' }}>
                             {pieData.map((cat, i) => (
-                                <span key={i} className={`category-badge ${cat.name}`}>
+                                <span key={i} className={`category-badge ${cat.name}`} style={{ fontSize: '0.75rem', padding: '4px 10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px' }}>
                                     <span style={{
                                         width: 8, height: 8, borderRadius: '50%',
                                         background: cat.color, display: 'inline-block'
@@ -277,21 +281,21 @@ function Dashboard() {
                                 <AreaChart data={trendData}>
                                     <defs>
                                         <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
+                                            <stop offset="5%" stopColor="var(--primary-400)" stopOpacity={0.4} />
+                                            <stop offset="95%" stopColor="var(--primary-400)" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="day" tick={{ fontSize: 11 }} />
-                                    <YAxis tick={{ fontSize: 11 }} />
-                                    <Tooltip content={<CustomTooltip />} />
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)' }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)' }} dx={-10} />
+                                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1, strokeDasharray: '4 4' }} />
                                     <Area
                                         type="monotone"
                                         dataKey="amount"
-                                        stroke="#a855f7"
-                                        strokeWidth={2.5}
+                                        stroke="var(--primary-400)"
+                                        strokeWidth={3}
                                         fill="url(#colorAmount)"
-                                        animationDuration={1000}
+                                        animationDuration={1500}
                                     />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -320,8 +324,9 @@ function Dashboard() {
                                 <motion.div
                                     key={tx._id}
                                     className="transaction-item"
-                                    whileHover={{ x: 4 }}
+                                    whileHover={{ x: 6, backgroundColor: 'rgba(255,255,255,0.02)' }}
                                     transition={{ type: 'spring', stiffness: 400 }}
+                                    style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '16px', borderRadius: 0, border: 'none', borderBottomWidth: '1px', borderBottomStyle: 'solid', borderBottomColor: 'rgba(255,255,255,0.05)', marginBottom: '8px' }}
                                 >
                                     <div
                                         className="transaction-icon"
@@ -344,7 +349,7 @@ function Dashboard() {
                                             <span>{formatDate(tx.date)}</span>
                                         </div>
                                     </div>
-                                    <div className={`transaction-amount ${tx.type}`}>
+                                    <div className={`transaction-amount ${tx.type}`} style={{ fontSize: '1.05rem', fontWeight: 700 }}>
                                         {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
                                     </div>
                                 </motion.div>
