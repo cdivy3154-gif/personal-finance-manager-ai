@@ -19,6 +19,8 @@ app.use(express.json());
 // API Routes
 app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/budget', require('./routes/budget'));
+app.use('/api/bills', require('./routes/bills'));
+app.use('/api/goals', require('./routes/goals'));
 
 // Health check
 app.get('/api/health', (req, res) => {

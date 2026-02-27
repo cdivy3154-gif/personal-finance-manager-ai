@@ -2,7 +2,7 @@
  * Layout Component
  * App shell with glassmorphic sidebar and mobile bottom navigation
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -13,7 +13,9 @@ import {
     HiOutlineUserGroup,
     HiOutlineStar,
     HiOutlineMenu,
-    HiOutlineX
+    HiOutlineX,
+    HiOutlineMoon,
+    HiOutlineSun
 } from 'react-icons/hi';
 
 const navItems = [
@@ -26,15 +28,34 @@ const navItems = [
 ];
 
 function Layout({ children }) {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const location = useLocation();
+
+    // Dark Mode State
+    const [theme, setTheme] = useState(() => {
+        return localStorage.getItem('theme') || 'dark'; // default to dark
+    });
+
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
+    const toggleTheme = () => {
+        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    };
+
+    // Close mobile menu when route changes
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [location.pathname]);
 
     return (
         <div className="app-layout">
             {/* Mobile Menu Toggle */}
             <button
                 className="mobile-toggle btn-icon"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 style={{
                     position: 'fixed',
                     top: '16px',
@@ -43,18 +64,18 @@ function Layout({ children }) {
                     display: 'none',
                 }}
             >
-                {sidebarOpen ? <HiOutlineX size={20} /> : <HiOutlineMenu size={20} />}
+                {isMobileMenuOpen ? <HiOutlineX size={20} /> : <HiOutlineMenu size={20} />}
             </button>
 
             {/* Sidebar Overlay for mobile */}
             <AnimatePresence>
-                {sidebarOpen && (
+                {isMobileMenuOpen && (
                     <motion.div
                         className="sidebar-overlay"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        onClick={() => setSidebarOpen(false)}
+                        onClick={() => setIsMobileMenuOpen(false)}
                         style={{
                             position: 'fixed',
                             inset: 0,
@@ -67,7 +88,7 @@ function Layout({ children }) {
             </AnimatePresence>
 
             {/* Sidebar */}
-            <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+            <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
                 <div className="sidebar-header">
                     <div className="sidebar-logo">F</div>
                     <div className="sidebar-brand">
@@ -83,7 +104,7 @@ function Layout({ children }) {
                             key={item.path}
                             to={item.path}
                             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                            onClick={() => setSidebarOpen(false)}
+                            onClick={() => setIsMobileMenuOpen(false)}
                         >
                             <item.icon className="nav-icon" />
                             <span className="nav-label">{item.label}</span>
@@ -101,6 +122,25 @@ function Layout({ children }) {
 
             {/* Main Content */}
             <main className="main-content">
+                {/* Top Navbar */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-xl)' }}>
+                    <div>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Welcome back, Student 👋</p>
+                        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 600 }}>Overview</h1>
+                    </div>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <button
+                            onClick={toggleTheme}
+                            className="btn-icon"
+                            title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+                        >
+                            {theme === 'dark' ? <HiOutlineSun size={20} /> : <HiOutlineMoon size={20} />}
+                        </button>
+                        <div style={{ width: 44, height: 44, borderRadius: 'var(--radius-md)', background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 600, color: 'white', boxShadow: 'var(--shadow-glow)', cursor: 'pointer' }}>
+                            S
+                        </div>
+                    </div>
+                </div>
                 <motion.div
                     key={location.pathname}
                     initial={{ opacity: 0, y: 12 }}
