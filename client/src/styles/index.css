@@ -99,8 +99,8 @@
   /* Soft teal glow */
 
   /* Typography */
-  --font-primary: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
-  --font-display: 'Manrope', 'Plus Jakarta Sans', sans-serif;
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* Sidebar */
   --sidebar-width: 260px;

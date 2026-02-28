@@ -40,7 +40,7 @@ const CustomTooltip = ({ active, payload, label }) => {
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                         <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: entry.color }} />
                         <span style={{ color: 'var(--text-secondary)' }}>{entry.name}:</span>
-                        <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>${entry.value?.toFixed(2)}</span>
+                        <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>₹{entry.value?.toFixed(2)}</span>
                     </div>
                 ))}
             </div>
@@ -92,7 +92,7 @@ function Analytics() {
     };
 
     const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
+        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount || 0);
     };
 
     // Prepare data

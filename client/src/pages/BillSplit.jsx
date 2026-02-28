@@ -205,7 +205,7 @@ function BillSplit() {
                                     <div style={{ textAlign: 'right' }}>
                                         <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Total</div>
                                         <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary-300)' }}>
-                                            ${bill.totalAmount.toFixed(2)}
+                                            ₹{bill.totalAmount.toFixed(2)}
                                         </div>
                                     </div>
                                     <button
@@ -252,7 +252,7 @@ function BillSplit() {
 
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                                                 <span style={{ fontSize: '1.05rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
-                                                    ${p.amountOwed.toFixed(2)}
+                                                    ₹{p.amountOwed.toFixed(2)}
                                                 </span>
 
                                                 {!p.isPaid && (

@@ -121,7 +121,7 @@ exports.getBudgetUtilization = async (req, res) => {
             if (u.status === 'exceeded') {
                 alerts.push({
                     type: 'danger',
-                    message: `🚨 ${u.category} budget exceeded! Spent $${u.spent.toFixed(2)} of $${u.budgetLimit.toFixed(2)}`
+                    message: `🚨 ${u.category} budget exceeded! Spent ₹${u.spent.toFixed(2)} of ₹${u.budgetLimit.toFixed(2)}`
                 });
             } else if (u.status === 'warning') {
                 alerts.push({
@@ -138,7 +138,7 @@ exports.getBudgetUtilization = async (req, res) => {
             if (overallPct >= 100) {
                 alerts.unshift({
                     type: 'danger',
-                    message: `🚨 Overall budget exceeded! Spent $${totalSpent.toFixed(2)} of $${totalBudget.toFixed(2)}`
+                    message: `🚨 Overall budget exceeded! Spent ₹${totalSpent.toFixed(2)} of ₹${totalBudget.toFixed(2)}`
                 });
             } else if (overallPct >= 80) {
                 alerts.unshift({

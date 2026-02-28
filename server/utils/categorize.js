@@ -167,7 +167,7 @@ function getSpendingInsights(transactions) {
     if (dayOfMonth > 5 && totalExpenseSoFar > 0) {
         const projectedExpense = (totalExpenseSoFar / dayOfMonth) * daysInMonth;
         const projectedBalance = totalIncome - projectedExpense;
-        insights.push(`🔮 At current pace, your projected month-end balance is $${projectedBalance.toFixed(2)}`);
+        insights.push(`🔮 At current pace, your projected month-end balance is ₹${projectedBalance.toFixed(2)}`);
     }
 
     return insights;

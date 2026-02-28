@@ -58,7 +58,7 @@ const CustomTooltip = ({ active, payload }) => {
             }}>
                 <p style={{ fontWeight: 600, letterSpacing: '0.5px', marginBottom: '4px' }}>{payload[0].name || ''}</p>
                 <p style={{ color: payload[0].color || 'var(--primary-400)', fontSize: '1.1rem', fontWeight: 700 }}>
-                    ${payload[0].value?.toFixed(2)}
+                    ₹{payload[0].value?.toFixed(2)}
                 </p>
             </div>
         );
@@ -93,9 +93,9 @@ function Dashboard() {
 
     // Format currency
     const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-US', {
+        return new Intl.NumberFormat('en-IN', {
             style: 'currency',
-            currency: 'USD',
+            currency: 'INR',
             minimumFractionDigits: 2
         }).format(amount || 0);
     };

@@ -231,11 +231,11 @@ function SavingsGoals() {
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', fontSize: '0.9rem' }}>
                                 <div>
                                     <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '4px' }}>Saved</div>
-                                    <div style={{ fontWeight: 700, fontFamily: 'var(--font-display)', fontSize: '1.2rem', color: 'var(--text-primary)' }}>${goal.currentAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
+                                    <div style={{ fontWeight: 700, fontFamily: 'var(--font-display)', fontSize: '1.2rem', color: 'var(--text-primary)' }}>₹{goal.currentAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
                                     <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '4px' }}>Target</div>
-                                    <div style={{ fontWeight: 700, fontFamily: 'var(--font-display)', fontSize: '1.2rem', color: 'var(--text-primary)' }}>${goal.targetAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
+                                    <div style={{ fontWeight: 700, fontFamily: 'var(--font-display)', fontSize: '1.2rem', color: 'var(--text-primary)' }}>₹{goal.targetAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
                                 </div>
                             </div>
 
@@ -365,7 +365,7 @@ function SavingsGoals() {
 
                             <div style={{ textAlign: 'center', marginBottom: 24, fontSize: '0.9rem', color: 'var(--text-muted)' }}>
                                 Adding to <strong>{selectedGoal.goalName}</strong><br />
-                                (${selectedGoal.currentAmount.toLocaleString()} / ${selectedGoal.targetAmount.toLocaleString()})
+                                (₹{selectedGoal.currentAmount.toLocaleString()} / ₹{selectedGoal.targetAmount.toLocaleString()})
                             </div>
 
                             <form onSubmit={handleAddFunds}>
