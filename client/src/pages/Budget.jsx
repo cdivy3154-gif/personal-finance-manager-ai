@@ -25,7 +25,7 @@ function Budget() {
     const [budget, setBudget] = useState({ totalBudget: 0, categories: {} });
     const [utilization, setUtilization] = useState(null);
     const [editing, setEditing] = useState(false);
-    const [form, setForm] = useState({ totalBudget: '', categories: {} });
+    const [form, setForm] = useState({ totalBudget: '', categories: { Food: '', Entertainment: '', Academics: '', Transportation: '', Utilities: '', Shopping: '', Others: '' } });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -39,11 +39,17 @@ function Budget() {
                 api.get(`/budget/${month}`),
                 api.get(`/budget/${month}/utilization`)
             ]);
-            setBudget(budgetRes.data.data);
+            const budgetData = budgetRes.data.data;
+            setBudget(budgetData);
             setUtilization(utilRes.data.data);
+            // Convert all category values to strings for consistent form handling
+            const catStrings = {};
+            CATEGORIES.forEach(cat => {
+                catStrings[cat] = budgetData.categories?.[cat] ? String(budgetData.categories[cat]) : '';
+            });
             setForm({
-                totalBudget: budgetRes.data.data.totalBudget?.toString() || '',
-                categories: { ...budgetRes.data.data.categories }
+                totalBudget: budgetData.totalBudget ? String(budgetData.totalBudget) : '',
+                categories: catStrings
             });
         } catch (error) {
             console.error('Error fetching budget:', error);
@@ -67,19 +73,23 @@ function Budget() {
     // Save budget
     const handleSave = async () => {
         try {
-            const payload = {
-                totalBudget: parseFloat(form.totalBudget) || 0,
-                categories: {}
-            };
+            const categories = {};
             CATEGORIES.forEach(cat => {
-                payload.categories[cat] = parseFloat(form.categories[cat]) || 0;
+                const val = form.categories[cat];
+                categories[cat] = val !== '' && val !== undefined ? Number(val) : 0;
             });
+            const payload = {
+                totalBudget: form.totalBudget !== '' ? Number(form.totalBudget) : 0,
+                categories
+            };
 
+            console.log('Saving budget payload:', JSON.stringify(payload));
             await api.put(`/budget/${month}`, payload);
             toast.success('Budget saved! 💰');
             setEditing(false);
             fetchBudgetData();
         } catch (error) {
+            console.error('Save budget error:', error);
             toast.error('Failed to save budget');
         }
     };
@@ -121,7 +131,7 @@ function Budget() {
                 <div style={{ display: 'flex', gap: 12 }}>
                     {editing ? (
                         <>
-                            <button className="btn btn-secondary" onClick={() => { setEditing(false); setForm({ totalBudget: budget.totalBudget?.toString() || '', categories: { ...budget.categories } }); }}>
+                            <button className="btn btn-secondary" onClick={() => { setEditing(false); const catStrings = {}; CATEGORIES.forEach(cat => { catStrings[cat] = budget.categories?.[cat] ? String(budget.categories[cat]) : ''; }); setForm({ totalBudget: budget.totalBudget ? String(budget.totalBudget) : '', categories: catStrings }); }}>
                                 Cancel
                             </button>
                             <button className="btn btn-primary" onClick={handleSave}>

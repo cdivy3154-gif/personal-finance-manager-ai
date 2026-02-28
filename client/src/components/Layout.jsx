@@ -112,12 +112,7 @@ function Layout({ children }) {
                     ))}
                 </nav>
 
-                <div className="sidebar-footer">
-                    <div className="sidebar-footer-card">
-                        <p>🎓 Made for students</p>
-                        <span className="version">v1.0.0 • Phase 2</span>
-                    </div>
-                </div>
+
             </aside>
 
             {/* Main Content */}
