@@ -18,7 +18,7 @@ function BillSplit() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [form, setForm] = useState({
-        title: '', totalAmount: '', paidBy: '',
+        description: '', totalAmount: '', paidBy: '',
         splitType: 'equal', participants: [{ name: '', share: '' }]
     });
 
@@ -56,19 +56,18 @@ function BillSplit() {
         e.preventDefault();
         try {
             const payload = {
-                title: form.title,
+                description: form.description,
                 totalAmount: parseFloat(form.totalAmount),
-                paidBy: form.paidBy,
                 splitType: form.splitType,
                 participants: form.participants.filter(p => p.name).map(p => ({
                     name: p.name,
-                    share: p.share ? parseFloat(p.share) : undefined
+                    amountOwed: p.share ? parseFloat(p.share) : undefined
                 }))
             };
             await api.post('/bills', payload);
             toast.success('Bill split created! 🎉');
             setShowModal(false);
-            setForm({ title: '', totalAmount: '', paidBy: '', splitType: 'equal', participants: [{ name: '', share: '' }] });
+            setForm({ description: '', totalAmount: '', paidBy: '', splitType: 'equal', participants: [{ name: '', share: '' }] });
             fetchBills();
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to create bill');
@@ -77,7 +76,7 @@ function BillSplit() {
 
     const settleBill = async (billId, participantName) => {
         try {
-            await api.put(`/bills/${billId}/settle`, { participantName });
+            await api.post(`/bills/${billId}/settle`, { participantName });
             toast.success(`${participantName} settled up! ✅`);
             fetchBills();
         } catch (error) {
@@ -145,10 +144,10 @@ function BillSplit() {
                                         fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.15rem',
                                         color: 'var(--text-primary)', marginBottom: 4
                                     }}>
-                                        {bill.title}
+                                        {bill.description}
                                     </h3>
                                     <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                                        Paid by <strong style={{ color: 'var(--text-primary)' }}>{bill.paidBy}</strong> • {bill.splitType} split
+                                        Created by <strong style={{ color: 'var(--text-primary)' }}>{bill.createdBy}</strong> • {bill.splitType || 'equal'} split
                                     </p>
                                 </div>
                                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -208,10 +207,10 @@ function BillSplit() {
                                             {p.name}
                                         </span>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                            <span style={{ fontWeight: 600, fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
-                                                {formatCurrency(p.share)}
+                                            <span style={{ fontWeight: 600, fontFamily: "'Outfit', sans-serif", color: 'var(--text-primary)' }}>
+                                                {formatCurrency(p.amountOwed)}
                                             </span>
-                                            {p.settled ? (
+                                            {p.isPaid ? (
                                                 <span style={{
                                                     fontSize: '0.68rem', padding: '2px 8px',
                                                     background: 'var(--success-bg)', color: 'var(--secondary)',
@@ -279,7 +278,7 @@ function BillSplit() {
                             <form onSubmit={handleSubmit}>
                                 <div className="form-group">
                                     <label className="form-label">What's the bill for?</label>
-                                    <input type="text" className="form-input" placeholder="Dinner at Zara's" value={form.title} onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))} required />
+                                    <input type="text" className="form-input" placeholder="Dinner at Zara's" value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} required maxLength={50} />
                                 </div>
 
                                 <div className="form-row">

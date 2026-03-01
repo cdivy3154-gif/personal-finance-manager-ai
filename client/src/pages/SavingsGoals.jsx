@@ -54,7 +54,7 @@ function SavingsGoals() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [showAddFunds, setShowAddFunds] = useState(null);
-    const [form, setForm] = useState({ name: '', targetAmount: '', deadline: '' });
+    const [form, setForm] = useState({ goalName: '', targetAmount: '', deadline: '' });
     const [fundAmount, setFundAmount] = useState('');
 
     useEffect(() => { fetchGoals(); }, []);
@@ -75,13 +75,13 @@ function SavingsGoals() {
         e.preventDefault();
         try {
             await api.post('/goals', {
-                name: form.name,
+                goalName: form.goalName,
                 targetAmount: parseFloat(form.targetAmount),
                 deadline: form.deadline || undefined
             });
             toast.success('Goal created! 🎯');
             setShowModal(false);
-            setForm({ name: '', targetAmount: '', deadline: '' });
+            setForm({ goalName: '', targetAmount: '', deadline: '' });
             fetchGoals();
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to create goal');
@@ -90,7 +90,7 @@ function SavingsGoals() {
 
     const handleAddFunds = async (goalId) => {
         try {
-            await api.put(`/goals/${goalId}/add-funds`, { amount: parseFloat(fundAmount) });
+            await api.post(`/goals/${goalId}/add-funds`, { amount: parseFloat(fundAmount) });
             toast.success('Funds added! 💰');
             setShowAddFunds(null);
             setFundAmount('');
@@ -148,7 +148,7 @@ function SavingsGoals() {
             {goals.length > 0 ? (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 18 }}>
                     {goals.map((goal, index) => {
-                        const percentage = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0;
+                        const percentage = (goal.targetAmount > 0) ? (goal.currentAmount / goal.targetAmount) * 100 : 0;
                         const color = GOAL_COLORS[index % GOAL_COLORS.length];
                         const emoji = GOAL_EMOJIS[index % GOAL_EMOJIS.length];
                         const isComplete = percentage >= 100;
@@ -203,7 +203,7 @@ function SavingsGoals() {
                                     fontFamily: 'var(--font-display)', fontWeight: 700,
                                     fontSize: '1.1rem', marginBottom: 16, color: 'var(--text-primary)'
                                 }}>
-                                    {goal.name}
+                                    {goal.goalName}
                                 </h3>
 
                                 {/* Circular Progress */}
@@ -328,7 +328,7 @@ function SavingsGoals() {
                             <form onSubmit={handleCreate}>
                                 <div className="form-group">
                                     <label className="form-label">Goal Name</label>
-                                    <input type="text" className="form-input" placeholder="e.g., New Laptop, Summer Trip" value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} required />
+                                    <input type="text" className="form-input" placeholder="e.g., New Laptop, Summer Trip" value={form.goalName} onChange={(e) => setForm(f => ({ ...f, goalName: e.target.value }))} required maxLength={50} />
                                 </div>
                                 <div className="form-row">
                                     <div className="form-group">
@@ -337,7 +337,7 @@ function SavingsGoals() {
                                     </div>
                                     <div className="form-group">
                                         <label className="form-label">Deadline (optional)</label>
-                                        <input type="date" className="form-input" value={form.deadline} onChange={(e) => setForm(f => ({ ...f, deadline: e.target.value }))} />
+                                        <input type="date" className="form-input" value={form.deadline} onChange={(e) => setForm(f => ({ ...f, deadline: e.target.value }))} required />
                                     </div>
                                 </div>
                                 <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 8, padding: '14px' }}>
