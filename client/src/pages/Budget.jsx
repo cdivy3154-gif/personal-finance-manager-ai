@@ -1,6 +1,6 @@
 /**
  * Budget Page
- * Set monthly budgets per category, view utilization with progress bars and alerts
+ * Warm category budgets with emoji icons and animated progress bars
  */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
@@ -12,9 +12,14 @@ import {
 import api from '../utils/api';
 
 const CATEGORIES = ['Food', 'Entertainment', 'Academics', 'Transportation', 'Utilities', 'Shopping', 'Others'];
-const CATEGORY_EMOJIS = {
-    Food: '🍕', Entertainment: '🎬', Academics: '📚',
-    Transportation: '🚗', Utilities: '💡', Shopping: '🛍️', Others: '📦'
+const CATEGORY_CONFIG = {
+    Food: { emoji: '🍕', color: '#E07A5F' },
+    Entertainment: { emoji: '🎮', color: '#9B72CF' },
+    Academics: { emoji: '📚', color: '#5B8FB9' },
+    Transportation: { emoji: '🚌', color: '#E8A838' },
+    Utilities: { emoji: '💡', color: '#5AACA8' },
+    Shopping: { emoji: '🛍️', color: '#D4739D' },
+    Others: { emoji: '📦', color: '#9B9DB3' }
 };
 
 function Budget() {
@@ -28,9 +33,7 @@ function Budget() {
     const [form, setForm] = useState({ totalBudget: '', categories: { Food: '', Entertainment: '', Academics: '', Transportation: '', Utilities: '', Shopping: '', Others: '' } });
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchBudgetData();
-    }, [month]);
+    useEffect(() => { fetchBudgetData(); }, [month]);
 
     const fetchBudgetData = async () => {
         try {
@@ -42,7 +45,6 @@ function Budget() {
             const budgetData = budgetRes.data.data;
             setBudget(budgetData);
             setUtilization(utilRes.data.data);
-            // Convert all category values to strings for consistent form handling
             const catStrings = {};
             CATEGORIES.forEach(cat => {
                 catStrings[cat] = budgetData.categories?.[cat] ? String(budgetData.categories[cat]) : '';
@@ -58,7 +60,6 @@ function Budget() {
         }
     };
 
-    // Navigate months
     const changeMonth = (direction) => {
         const [y, m] = month.split('-').map(Number);
         const date = new Date(y, m - 1 + direction, 1);
@@ -70,7 +71,6 @@ function Budget() {
         return new Date(y, m - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     };
 
-    // Save budget
     const handleSave = async () => {
         try {
             const categories = {};
@@ -82,10 +82,8 @@ function Budget() {
                 totalBudget: form.totalBudget !== '' ? Number(form.totalBudget) : 0,
                 categories
             };
-
-            console.log('Saving budget payload:', JSON.stringify(payload));
             await api.put(`/budget/${month}`, payload);
-            toast.success('Budget saved! 💰');
+            toast.success('Budget saved! 🎯');
             setEditing(false);
             fetchBudgetData();
         } catch (error) {
@@ -95,7 +93,7 @@ function Budget() {
     };
 
     const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount || 0);
+        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(amount || 0);
     };
 
     const getProgressColor = (status) => {
@@ -104,6 +102,15 @@ function Budget() {
             case 'warning': return 'warning';
             case 'caution': return 'caution';
             default: return 'good';
+        }
+    };
+
+    const getProgressBarColor = (status) => {
+        switch (status) {
+            case 'exceeded': return 'var(--primary)';
+            case 'warning': return '#E8A838';
+            case 'caution': return 'var(--accent)';
+            default: return 'var(--secondary)';
         }
     };
 
@@ -125,8 +132,8 @@ function Budget() {
             {/* Page Header */}
             <div className="page-header">
                 <div>
-                    <h1 className="page-title" style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em', marginTop: '4px' }}>Budget</h1>
-                    <p className="page-subtitle" style={{ letterSpacing: '0.2px' }}>Set and track your monthly spending limits</p>
+                    <h1 className="page-title">Budget</h1>
+                    <p className="page-subtitle">Set and track your monthly spending limits</p>
                 </div>
                 <div style={{ display: 'flex', gap: 12 }}>
                     {editing ? (
@@ -147,12 +154,12 @@ function Budget() {
             </div>
 
             {/* Month Picker */}
-            <div className="month-picker" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: 24, fontSize: '1.1rem', fontWeight: 600 }}>
-                <button className="btn-icon" onClick={() => changeMonth(-1)} style={{ width: '36px', height: '36px', borderRadius: '50%' }}>
+            <div className="month-picker" style={{ marginBottom: 24 }}>
+                <button className="btn-icon" onClick={() => changeMonth(-1)} style={{ width: 36, height: 36, borderRadius: '50%' }}>
                     <HiOutlineChevronLeft />
                 </button>
-                <span style={{ minWidth: '140px', textAlign: 'center' }}>{formatMonthDisplay(month)}</span>
-                <button className="btn-icon" onClick={() => changeMonth(1)} style={{ width: '36px', height: '36px', borderRadius: '50%' }}>
+                <span>{formatMonthDisplay(month)}</span>
+                <button className="btn-icon" onClick={() => changeMonth(1)} style={{ width: 36, height: 36, borderRadius: '50%' }}>
                     <HiOutlineChevronRight />
                 </button>
             </div>
@@ -161,28 +168,27 @@ function Budget() {
             {utilization?.alerts?.map((alert, i) => (
                 <motion.div
                     key={i}
-                    className={`alert ${alert.type}`}
-                    initial={{ opacity: 0, y: -10 }}
+                    className={`alert ${alert.type === 'error' ? 'danger' : 'warning'}`}
+                    initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.1 }}
-                    style={{ padding: '12px 16px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', background: alert.type === 'error' ? 'rgba(255,107,107,0.15)' : 'rgba(255,165,2,0.15)', border: `1px solid ${alert.type === 'error' ? 'rgba(255,107,107,0.3)' : 'rgba(255,165,2,0.3)'}`, color: alert.type === 'error' ? '#ff6b6b' : '#ffa502', fontWeight: 500, fontSize: '0.9rem' }}
                 >
-                    <HiOutlineExclamation size={22} />
+                    <HiOutlineExclamation size={20} />
                     {alert.message}
                 </motion.div>
             ))}
 
-            {/* Overall Budget */}
+            {/* Overall Budget — hero style */}
             <motion.div
-                className="glass-card"
-                style={{ marginBottom: 24 }}
+                className="glass-card-static"
+                style={{ marginBottom: 28, padding: '24px 28px' }}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
             >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                     <div>
-                        <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }}>Overall Budget</h3>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                        <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.15rem', color: 'var(--text-primary)' }}>Overall Budget</h3>
+                        <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: 4 }}>
                             {formatCurrency(utilization?.totalSpent)} of {formatCurrency(utilization?.totalBudget)} spent
                         </p>
                     </div>
@@ -198,9 +204,10 @@ function Budget() {
                     ) : (
                         <span style={{
                             fontFamily: 'var(--font-display)',
-                            fontSize: '1.5rem',
+                            fontSize: '1.6rem',
                             fontWeight: 700,
-                            color: 'var(--primary-300)'
+                            color: 'var(--text-primary)',
+                            letterSpacing: '-0.02em'
                         }}>
                             {formatCurrency(budget.totalBudget)}
                         </span>
@@ -211,7 +218,7 @@ function Budget() {
                         className={`budget-progress-bar ${utilization?.overallPercentage >= 100 ? 'exceeded' : utilization?.overallPercentage >= 80 ? 'warning' : utilization?.overallPercentage >= 60 ? 'caution' : 'good'}`}
                         initial={{ width: 0 }}
                         animate={{ width: `${Math.min(utilization?.overallPercentage || 0, 100)}%` }}
-                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                        transition={{ duration: 1, ease: [0.34, 1.56, 0.64, 1] }}
                     />
                 </div>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 8, textAlign: 'right' }}>
@@ -220,32 +227,51 @@ function Budget() {
             </motion.div>
 
             {/* Category Budgets */}
-            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.2rem', marginBottom: 16 }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.2rem', marginBottom: 18, color: 'var(--text-primary)' }}>
                 Category Budgets
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
                 {CATEGORIES.map((cat, index) => {
                     const catUtil = utilization?.categories?.find(c => c.category === cat);
+                    const config = CATEGORY_CONFIG[cat];
                     return (
                         <motion.div
                             key={cat}
-                            className="glass-card"
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
+                            className="glass-card-static"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
-                            style={{ padding: '16px 20px' }}
+                            style={{
+                                padding: '18px 22px',
+                                borderLeft: `4px solid ${config.color}`,
+                                borderRadius: index % 2 === 0 ? 'var(--radius-xl)' : 'var(--radius-lg)'
+                            }}
                         >
-                            <div className="budget-progress-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                                <span className="budget-progress-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, fontSize: '0.95rem' }}>
-                                    <span style={{ background: 'rgba(255,255,255,0.05)', padding: '6px', borderRadius: '8px', display: 'flex' }}>{CATEGORY_EMOJIS[cat]}</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontWeight: 600, fontSize: '0.95rem' }}>
+                                    <span style={{
+                                        background: `${config.color}15`,
+                                        padding: '6px 8px',
+                                        borderRadius: 'var(--radius-sm)',
+                                        fontSize: '1.1rem'
+                                    }}>
+                                        {config.emoji}
+                                    </span>
                                     <span>{cat}</span>
                                     {catUtil?.overBudget && (
-                                        <span style={{ color: 'var(--accent-400)', fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', background: 'rgba(255,107,107,0.15)', borderRadius: '12px', minWidth: 'max-content' }}>
+                                        <span style={{
+                                            color: 'var(--primary)',
+                                            fontSize: '0.65rem',
+                                            fontWeight: 700,
+                                            padding: '2px 8px',
+                                            background: 'var(--danger-bg)',
+                                            borderRadius: 'var(--radius-pill)',
+                                        }}>
                                             OVER
                                         </span>
                                     )}
                                 </span>
-                                <span className="budget-progress-values" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
                                     {editing ? (
                                         <input
                                             type="number"
@@ -259,19 +285,25 @@ function Budget() {
                                             }))}
                                         />
                                     ) : (
-                                        <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{formatCurrency(catUtil?.spent)}</span>
+                                        <span style={{ color: 'var(--text-primary)', fontWeight: 600, fontFamily: 'var(--font-display)' }}>
+                                            {formatCurrency(catUtil?.spent)}
+                                        </span>
                                     )}
-                                    {!editing && ` / ${formatCurrency(catUtil?.budgetLimit)}`}
+                                    {!editing && <span style={{ color: 'var(--text-muted)' }}> / {formatCurrency(catUtil?.budgetLimit)}</span>}
                                 </span>
                             </div>
                             {!editing && (
-                                <div className="budget-progress-bar-bg" style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+                                <div className="budget-progress-bar-bg" style={{ height: 8, borderRadius: 4 }}>
                                     <motion.div
                                         className={`budget-progress-bar ${getProgressColor(catUtil?.status)}`}
                                         initial={{ width: 0 }}
                                         animate={{ width: `${Math.min(catUtil?.percentage || 0, 100)}%` }}
                                         transition={{ duration: 0.8, delay: index * 0.05 }}
-                                        style={{ height: '100%', borderRadius: '4px', background: catUtil?.status === 'exceeded' ? 'var(--accent-400)' : catUtil?.status === 'warning' ? '#f97316' : catUtil?.status === 'caution' ? '#facc15' : 'var(--success-400)' }}
+                                        style={{
+                                            height: '100%',
+                                            borderRadius: 4,
+                                            background: getProgressBarColor(catUtil?.status)
+                                        }}
                                     />
                                 </div>
                             )}

@@ -1,415 +1,332 @@
+/**
+ * BillSplit Page
+ * Warm card styling, overlapping avatars, ₹ currency
+ */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiOutlineUsers, HiOutlinePlus, HiOutlineCheck, HiOutlineReceiptTax, HiOutlineTrash, HiOutlineX } from 'react-icons/hi';
-import api from '../utils/api';
 import toast from 'react-hot-toast';
+import {
+    HiOutlinePlus, HiOutlineX, HiOutlineTrash,
+    HiOutlineCheck, HiOutlineUserAdd
+} from 'react-icons/hi';
+import api from '../utils/api';
+
+const SPLIT_COLORS = ['#E07A5F', '#81B29A', '#F2CC8F', '#5B8FB9', '#9B72CF', '#D4739D', '#5AACA8', '#E8A838'];
 
 function BillSplit() {
     const [bills, setBills] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [form, setForm] = useState({
+        title: '', totalAmount: '', paidBy: '',
+        splitType: 'equal', participants: [{ name: '', share: '' }]
+    });
 
-    // Modal Form State
-    const [description, setDescription] = useState('');
-    const [totalAmount, setTotalAmount] = useState('');
-    const [splitType, setSplitType] = useState('equal');
-    const [participants, setParticipants] = useState([{ name: 'Me', amountOwed: 0, isPaid: true }, { name: '', amountOwed: 0, isPaid: false }]);
-
-    useEffect(() => {
-        fetchBills();
-    }, []);
+    useEffect(() => { fetchBills(); }, []);
 
     const fetchBills = async () => {
         try {
             setLoading(true);
             const res = await api.get('/bills');
-            setBills(res.data.data);
+            setBills(res.data.data || []);
         } catch (error) {
-            toast.error('Failed to load bills');
+            console.error('Error fetching bills:', error);
         } finally {
             setLoading(false);
         }
     };
 
-    const calculateCustomSplits = () => {
-        if (!totalAmount) return;
-
-        // Auto-calculate split amounts based on equal distribution
-        if (splitType === 'equal') {
-            const activeParticipants = participants.filter(p => p.name.trim() !== '');
-            if (activeParticipants.length === 0) return;
-
-            const splitAmt = (parseFloat(totalAmount) / activeParticipants.length).toFixed(2);
-
-            const updatedParticipants = participants.map(p => {
-                if (p.name.trim() === '') return p;
-                return { ...p, amountOwed: parseFloat(splitAmt) };
-            });
-            setParticipants(updatedParticipants);
-        }
-    };
-
-    useEffect(() => {
-        calculateCustomSplits();
-    }, [totalAmount, splitType, participants.length]);
-
     const addParticipant = () => {
-        setParticipants([...participants, { name: '', amountOwed: 0, isPaid: false }]);
-    };
-
-    const updateParticipant = (index, field, value) => {
-        const updated = [...participants];
-        updated[index][field] = value;
-        setParticipants(updated);
+        setForm(f => ({ ...f, participants: [...f.participants, { name: '', share: '' }] }));
     };
 
     const removeParticipant = (index) => {
-        if (index === 0) return; // Cannot remove "Me"
-        const updated = participants.filter((_, i) => i !== index);
-        setParticipants(updated);
+        setForm(f => ({ ...f, participants: f.participants.filter((_, i) => i !== index) }));
     };
 
-    const handleCreateBill = async (e) => {
+    const updateParticipant = (index, field, value) => {
+        setForm(f => {
+            const updated = [...f.participants];
+            updated[index] = { ...updated[index], [field]: value };
+            return { ...f, participants: updated };
+        });
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-
-        // Validate custom splits
-        const validParticipants = participants.filter(p => p.name.trim() !== '');
-        if (validParticipants.length < 2) {
-            toast.error('Need at least 2 participants');
-            return;
-        }
-
-        if (splitType === 'custom') {
-            const sum = validParticipants.reduce((acc, curr) => acc + parseFloat(curr.amountOwed || 0), 0);
-            if (Math.abs(sum - parseFloat(totalAmount)) > 0.1) {
-                toast.error(`Custom amounts must equal total (${sum} != ${totalAmount})`);
-                return;
-            }
-        }
-
         try {
             const payload = {
-                description,
-                totalAmount: parseFloat(totalAmount),
-                splitType,
-                participants: validParticipants
+                title: form.title,
+                totalAmount: parseFloat(form.totalAmount),
+                paidBy: form.paidBy,
+                splitType: form.splitType,
+                participants: form.participants.filter(p => p.name).map(p => ({
+                    name: p.name,
+                    share: p.share ? parseFloat(p.share) : undefined
+                }))
             };
-
-            const res = await api.post('/bills', payload);
-            setBills([res.data.data, ...bills]);
-            toast.success('Bill split created successfully');
+            await api.post('/bills', payload);
+            toast.success('Bill split created! 🎉');
             setShowModal(false);
-            resetForm();
+            setForm({ title: '', totalAmount: '', paidBy: '', splitType: 'equal', participants: [{ name: '', share: '' }] });
+            fetchBills();
         } catch (error) {
-            const msg = error.response?.data?.error;
-            toast.error(Array.isArray(msg) ? msg[0] : msg || 'Failed to create bill');
+            toast.error(error.response?.data?.message || 'Failed to create bill');
         }
     };
 
-    const resetForm = () => {
-        setDescription('');
-        setTotalAmount('');
-        setSplitType('equal');
-        setParticipants([{ name: 'Me', amountOwed: 0, isPaid: true }, { name: '', amountOwed: 0, isPaid: false }]);
-    };
-
-    const handleSettleParticipant = async (billId, participantName) => {
+    const settleBill = async (billId, participantName) => {
         try {
-            const res = await api.post(`/bills/${billId}/settle`, { participantName });
-
-            // Update local state
-            setBills(bills.map(b => b._id === billId ? res.data.data : b));
-            toast.success(`${participantName}'s share marked as settled`);
+            await api.put(`/bills/${billId}/settle`, { participantName });
+            toast.success(`${participantName} settled up! ✅`);
+            fetchBills();
         } catch (error) {
-            toast.error('Failed to settle share');
+            toast.error('Failed to settle');
         }
     };
 
-    const handleDeleteBill = async (billId) => {
+    const deleteBill = async (billId) => {
         if (!window.confirm('Delete this bill split?')) return;
         try {
             await api.delete(`/bills/${billId}`);
-            setBills(bills.filter(b => b._id !== billId));
             toast.success('Bill deleted');
-        } catch (error) {
-            toast.error('Failed to delete bill');
-        }
+            fetchBills();
+        } catch { toast.error('Failed to delete'); }
     };
 
-    return (
-        <div className="page-container" style={{ padding: '0 20px 100px 20px' }}>
-            <div className="page-header" style={{ marginBottom: '32px' }}>
-                <div>
-                    <h1 className="page-title" style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em', marginTop: '4px' }}>Bill Split</h1>
-                    <p className="page-subtitle" style={{ letterSpacing: '0.2px' }}>Split expenses fairly with roommates and friends</p>
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(amount || 0);
+    };
+
+    if (loading) {
+        return (
+            <div>
+                <div className="page-header">
+                    <div className="skeleton" style={{ width: 200, height: 28 }} />
                 </div>
-                <button
-                    className="btn btn-primary"
-                    onClick={() => setShowModal(true)}
-                >
-                    <HiOutlinePlus size={18} />
-                    Create New Split
+                {[1, 2].map(i => (
+                    <div key={i} className="skeleton" style={{ height: 160, borderRadius: 20, marginBottom: 16 }} />
+                ))}
+            </div>
+        );
+    }
+
+    return (
+        <div>
+            <div className="page-header">
+                <div>
+                    <h1 className="page-title">Split Bills</h1>
+                    <p className="page-subtitle">Split expenses with friends easily</p>
+                </div>
+                <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+                    <HiOutlinePlus size={18} /> New Bill
                 </button>
             </div>
 
-            {loading ? (
-                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                    Loading splits...
-                </div>
-            ) : bills.length === 0 ? (
-                <div className="glass-card empty-state" style={{ padding: '48px 24px' }}>
-                    <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '50%', marginBottom: '16px' }}>
-                        <HiOutlineUsers className="empty-state-icon" style={{ color: 'var(--primary-400)', fontSize: '48px', margin: 0 }} />
-                    </div>
-                    <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 700, marginBottom: '8px' }}>No Active Splits</h3>
-                    <p style={{ color: 'var(--text-secondary)', maxWidth: '400px', margin: '0 auto 24px auto', lineHeight: 1.6 }}>Create a group expense to start splitting bills with your friends securely.</p>
-                    <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-                        <HiOutlinePlus size={18} /> Split a Bill Now
-                    </button>
-                </div>
-            ) : (
-                <div className="grid-2" style={{ gap: '24px' }}>
-                    {bills.map(bill => (
+            {/* Bills List */}
+            {bills.length > 0 ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: 18 }}>
+                    {bills.map((bill, index) => (
                         <motion.div
                             key={bill._id}
-                            className="glass-card-static"
-                            style={{ padding: '24px' }}
-                            initial={{ opacity: 0, y: 20 }}
+                            className="glass-card"
+                            initial={{ opacity: 0, y: 12 }}
                             animate={{ opacity: 1, y: 0 }}
-                            whileHover={{ y: -4, backgroundColor: 'rgba(255,255,255,0.02)' }}
-                            transition={{ duration: 0.2 }}
+                            transition={{ delay: index * 0.05 }}
+                            style={{
+                                padding: '22px 24px',
+                                borderRadius: index % 2 === 0 ? 'var(--radius-xl)' : 'var(--radius-2xl)',
+                                borderTop: `3px solid ${SPLIT_COLORS[index % SPLIT_COLORS.length]}`
+                            }}
                         >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                                 <div>
-                                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-display)', marginBottom: '8px' }}>
-                                        {bill.description}
+                                    <h3 style={{
+                                        fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.15rem',
+                                        color: 'var(--text-primary)', marginBottom: 4
+                                    }}>
+                                        {bill.title}
                                     </h3>
-                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <span>{new Date(bill.createdAt).toLocaleDateString()}</span>
-                                        <span style={{
-                                            padding: '2px 8px',
-                                            borderRadius: '12px',
-                                            fontSize: '0.7rem',
-                                            fontWeight: 700,
-                                            backgroundColor: bill.status === 'settled' ? 'rgba(46, 213, 115, 0.15)' :
-                                                bill.status === 'partially' ? 'rgba(255, 165, 2, 0.15)' : 'rgba(255, 71, 87, 0.15)',
-                                            color: bill.status === 'settled' ? 'var(--success-400)' :
-                                                bill.status === 'partially' ? '#ffa502' : 'var(--accent-400)',
-                                            textTransform: 'uppercase'
-                                        }}>
-                                            {bill.status}
-                                        </span>
-                                    </div>
+                                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                        Paid by <strong style={{ color: 'var(--text-primary)' }}>{bill.paidBy}</strong> • {bill.splitType} split
+                                    </p>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                    <div style={{ textAlign: 'right' }}>
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Total</div>
-                                        <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary-300)' }}>
-                                            ₹{bill.totalAmount.toFixed(2)}
-                                        </div>
-                                    </div>
+                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                    <span style={{
+                                        fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 700,
+                                        color: 'var(--text-primary)', letterSpacing: '-0.01em'
+                                    }}>
+                                        {formatCurrency(bill.totalAmount)}
+                                    </span>
                                     <button
-                                        onClick={() => handleDeleteBill(bill._id)}
                                         className="btn-icon"
-                                        style={{ background: 'transparent', border: 'none', color: 'var(--accent-400)', width: '36px', height: '36px' }}
-                                        title="Delete Bill"
+                                        onClick={() => deleteBill(bill._id)}
+                                        style={{ width: 28, height: 28, borderColor: 'rgba(224,122,95,0.15)', color: 'var(--danger)' }}
                                     >
-                                        <HiOutlineTrash size={18} />
+                                        <HiOutlineTrash size={14} />
                                     </button>
                                 </div>
                             </div>
 
-                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
-                                <p style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <HiOutlineUsers /> Participants ({bill.participants.length})
-                                </p>
-
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    {bill.participants.map((p, i) => (
+                            {/* Overlapping avatars */}
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+                                <div style={{ display: 'flex' }}>
+                                    {bill.participants?.slice(0, 5).map((p, i) => (
                                         <div key={i} style={{
-                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                            padding: '12px 16px',
-                                            background: p.isPaid ? 'rgba(46, 213, 115, 0.05)' : 'rgba(255,255,255,0.02)',
-                                            borderRadius: '12px',
-                                            border: p.isPaid ? '1px solid rgba(46, 213, 115, 0.2)' : '1px solid rgba(255,255,255,0.05)'
+                                            width: 34, height: 34, borderRadius: '50%',
+                                            background: `${SPLIT_COLORS[i % SPLIT_COLORS.length]}20`,
+                                            border: `2px solid ${SPLIT_COLORS[i % SPLIT_COLORS.length]}`,
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            fontSize: '0.7rem', fontWeight: 700, color: SPLIT_COLORS[i % SPLIT_COLORS.length],
+                                            marginLeft: i > 0 ? '-8px' : '0', zIndex: 5 - i,
+                                            boxShadow: '0 0 0 2px var(--bg-card)'
                                         }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <div style={{
-                                                    width: 36, height: 36, borderRadius: '50%',
-                                                    background: p.name === 'Me' ? 'var(--gradient-primary)' : 'rgba(255,255,255,0.1)',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    fontSize: '0.9rem', fontWeight: 700, color: 'white',
-                                                }}>
-                                                    {p.name.charAt(0).toUpperCase()}
-                                                </div>
-                                                <div>
-                                                    <p style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>{p.name}</p>
-                                                    <p style={{ fontSize: '0.8rem', color: p.isPaid ? 'var(--success-400)' : 'var(--accent-400)', fontWeight: 500, marginTop: '2px' }}>
-                                                        {p.isPaid ? 'Settled' : 'Owes'}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                                <span style={{ fontSize: '1.05rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
-                                                    ₹{p.amountOwed.toFixed(2)}
-                                                </span>
-
-                                                {!p.isPaid && (
-                                                    <button
-                                                        className="btn btn-icon"
-                                                        style={{ width: 36, height: 36, borderColor: 'rgba(46, 213, 115, 0.3)', color: 'var(--success-400)', background: 'rgba(46, 213, 115, 0.05)' }}
-                                                        onClick={() => handleSettleParticipant(bill._id, p.name)}
-                                                        title="Mark as Paid"
-                                                    >
-                                                        <HiOutlineCheck size={18} />
-                                                    </button>
-                                                )}
-                                                {p.isPaid && (
-                                                    <div style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success-400)', background: 'rgba(46, 213, 115, 0.1)', borderRadius: '50%' }}>
-                                                        <HiOutlineCheck size={20} />
-                                                    </div>
-                                                )}
-                                            </div>
+                                            {p.name?.charAt(0).toUpperCase()}
                                         </div>
                                     ))}
                                 </div>
+                                {bill.participants?.length > 5 && (
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: 8, fontWeight: 500 }}>
+                                        +{bill.participants.length - 5} more
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Participant details */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                {bill.participants?.map((p, i) => (
+                                    <div key={i} style={{
+                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                        padding: '8px 12px', background: 'var(--bg-surface)',
+                                        borderRadius: 'var(--radius-sm)', fontSize: '0.85rem'
+                                    }}>
+                                        <span style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <span style={{
+                                                width: 8, height: 8, borderRadius: '50%',
+                                                background: SPLIT_COLORS[i % SPLIT_COLORS.length]
+                                            }} />
+                                            {p.name}
+                                        </span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                            <span style={{ fontWeight: 600, fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
+                                                {formatCurrency(p.share)}
+                                            </span>
+                                            {p.settled ? (
+                                                <span style={{
+                                                    fontSize: '0.68rem', padding: '2px 8px',
+                                                    background: 'var(--success-bg)', color: 'var(--secondary)',
+                                                    borderRadius: 'var(--radius-pill)', fontWeight: 700
+                                                }}>
+                                                    PAID ✓
+                                                </span>
+                                            ) : (
+                                                <button
+                                                    className="btn btn-primary"
+                                                    onClick={() => settleBill(bill._id, p.name)}
+                                                    style={{ padding: '4px 12px', fontSize: '0.72rem', borderRadius: 'var(--radius-pill)' }}
+                                                >
+                                                    Settle
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </motion.div>
                     ))}
                 </div>
+            ) : (
+                <div className="glass-card-static" style={{ padding: '48px 24px' }}>
+                    <div className="empty-state">
+                        <div className="empty-state-icon">👥</div>
+                        <h3>No bill splits yet!</h3>
+                        <p>Split that dinner bill, movie tickets, or shared subscription with your friends.</p>
+                        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+                            <HiOutlinePlus /> Create First Split
+                        </button>
+                    </div>
+                </div>
             )}
+
+            {/* FAB */}
+            <button className="fab" onClick={() => setShowModal(true)}><HiOutlinePlus /></button>
 
             {/* Create Bill Modal */}
             <AnimatePresence>
                 {showModal && (
-                    <div className="modal-overlay">
+                    <motion.div
+                        className="modal-overlay"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowModal(false)}
+                    >
                         <motion.div
                             className="modal"
-                            initial={{ scale: 0.95, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.95, opacity: 0 }}
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                            onClick={(e) => e.stopPropagation()}
                         >
                             <div className="modal-header">
-                                <h2 className="modal-title">Split New Expense</h2>
-                                <button className="modal-close" onClick={() => { setShowModal(false); resetForm(); }}>
+                                <h2 className="modal-title">New Bill Split</h2>
+                                <button className="modal-close" onClick={() => setShowModal(false)}>
                                     <HiOutlineX />
                                 </button>
                             </div>
 
-                            <form onSubmit={handleCreateBill}>
+                            <form onSubmit={handleSubmit}>
                                 <div className="form-group">
-                                    <label className="form-label">Expense Description</label>
-                                    <input
-                                        type="text"
-                                        className="form-input"
-                                        value={description}
-                                        onChange={(e) => setDescription(e.target.value)}
-                                        placeholder="e.g., Weekend Pizza, Internet Bill"
-                                        required
-                                    />
+                                    <label className="form-label">What's the bill for?</label>
+                                    <input type="text" className="form-input" placeholder="Dinner at Zara's" value={form.title} onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))} required />
                                 </div>
 
                                 <div className="form-row">
                                     <div className="form-group">
-                                        <label className="form-label">Total Amount</label>
-                                        <div style={{ position: 'relative' }}>
-                                            <span style={{ position: 'absolute', left: 16, top: 12, color: 'var(--text-muted)' }}>$</span>
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                min="0.01"
-                                                className="form-input"
-                                                style={{ paddingLeft: 32 }}
-                                                value={totalAmount}
-                                                onChange={(e) => setTotalAmount(e.target.value)}
-                                                placeholder="0.00"
-                                                required
-                                            />
-                                        </div>
+                                        <label className="form-label">Total Amount (₹)</label>
+                                        <input type="number" className="form-input" placeholder="0" step="0.01" value={form.totalAmount} onChange={(e) => setForm(f => ({ ...f, totalAmount: e.target.value }))} required style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '1.1rem' }} />
                                     </div>
-
                                     <div className="form-group">
-                                        <label className="form-label">Split Type</label>
-                                        <select
-                                            className="form-select"
-                                            value={splitType}
-                                            onChange={(e) => setSplitType(e.target.value)}
-                                        >
-                                            <option value="equal">Split Equally</option>
-                                            <option value="custom">Custom Amounts</option>
-                                        </select>
+                                        <label className="form-label">Who Paid?</label>
+                                        <input type="text" className="form-input" placeholder="Your name" value={form.paidBy} onChange={(e) => setForm(f => ({ ...f, paidBy: e.target.value }))} required />
                                     </div>
                                 </div>
 
-                                <div style={{ marginBottom: '24px' }}>
-                                    <label className="form-label">Participants</label>
-
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                        {participants.map((p, idx) => (
-                                            <div key={idx} style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                                <input
-                                                    type="text"
-                                                    className="form-input"
-                                                    value={p.name}
-                                                    onChange={(e) => updateParticipant(idx, 'name', e.target.value)}
-                                                    placeholder="Name"
-                                                    disabled={idx === 0}
-                                                    required
-                                                    style={{ flex: 1, background: idx === 0 ? 'var(--bg-glass)' : undefined, opacity: idx === 0 ? 0.7 : 1 }}
-                                                />
-
-                                                <div style={{ position: 'relative', width: '120px' }}>
-                                                    <span style={{ position: 'absolute', left: 12, top: 12, color: 'var(--text-muted)' }}>$</span>
-                                                    <input
-                                                        type="number"
-                                                        className="form-input"
-                                                        style={{ paddingLeft: 24 }}
-                                                        value={p.amountOwed === 0 ? '' : p.amountOwed}
-                                                        onChange={(e) => updateParticipant(idx, 'amountOwed', e.target.value)}
-                                                        disabled={splitType === 'equal'}
-                                                        placeholder="0.00"
-                                                        required
-                                                    />
-                                                </div>
-
-                                                {idx > 0 && (
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-icon"
-                                                        style={{ height: 44, width: 44 }}
-                                                        onClick={() => removeParticipant(idx)}
-                                                    >
-                                                        <HiOutlineTrash />
-                                                    </button>
-                                                )}
-                                                {idx === 0 && (
-                                                    <div style={{ width: 44 }} /> // Spacer for alignment
-                                                )}
-                                            </div>
-                                        ))}
+                                <div className="form-group">
+                                    <label className="form-label">Split Type</label>
+                                    <div className="tabs" style={{ marginBottom: 0 }}>
+                                        <button type="button" className={`tab ${form.splitType === 'equal' ? 'active' : ''}`} onClick={() => setForm(f => ({ ...f, splitType: 'equal' }))}>⚖️ Equal</button>
+                                        <button type="button" className={`tab ${form.splitType === 'custom' ? 'active' : ''}`} onClick={() => setForm(f => ({ ...f, splitType: 'custom' }))}>✏️ Custom</button>
                                     </div>
+                                </div>
 
-                                    <button
-                                        type="button"
-                                        onClick={addParticipant}
-                                        style={{
-                                            display: 'inline-flex', alignItems: 'center', gap: '6px',
-                                            background: 'transparent', border: 'none', color: 'var(--primary-400)',
-                                            fontSize: '0.85rem', fontWeight: 600, marginTop: '12px', cursor: 'pointer'
-                                        }}
-                                    >
-                                        <HiOutlinePlus size={16} /> Add Friend
+                                <div className="form-group">
+                                    <label className="form-label">Participants</label>
+                                    {form.participants.map((p, i) => (
+                                        <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                                            <input type="text" className="form-input" placeholder="Name" value={p.name} onChange={(e) => updateParticipant(i, 'name', e.target.value)} required style={{ flex: 1 }} />
+                                            {form.splitType === 'custom' && (
+                                                <input type="number" className="form-input" placeholder="₹" value={p.share} onChange={(e) => updateParticipant(i, 'share', e.target.value)} style={{ width: 100 }} />
+                                            )}
+                                            {form.participants.length > 1 && (
+                                                <button type="button" className="btn-icon" onClick={() => removeParticipant(i)} style={{ color: 'var(--danger)', width: 32, height: 32 }}>
+                                                    <HiOutlineX size={14} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                    <button type="button" className="btn btn-secondary" onClick={addParticipant} style={{ fontSize: '0.82rem', padding: '8px 14px' }}>
+                                        <HiOutlineUserAdd /> Add Person
                                     </button>
                                 </div>
 
-                                <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '14px' }}>
-                                    <HiOutlineReceiptTax size={18} />
-                                    Split Bill
+                                <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 8, padding: '14px' }}>
+                                    Split This Bill
                                 </button>
                             </form>
                         </motion.div>
-                    </div>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>

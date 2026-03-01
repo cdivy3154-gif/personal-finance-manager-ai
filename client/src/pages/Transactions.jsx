@@ -1,22 +1,27 @@
 /**
  * Transactions Page
- * Full CRUD for income/expense with filters, modal form, and smart auto-categorization
+ * Full CRUD with emoji categories, warm styling, timeline feel
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
     HiOutlinePlus, HiOutlinePencil, HiOutlineTrash,
-    HiOutlineX, HiOutlineTrendingUp, HiOutlineTrendingDown,
-    HiOutlineSparkles, HiOutlineSearch
+    HiOutlineX, HiOutlineSparkles
 } from 'react-icons/hi';
 import api from '../utils/api';
 
 const CATEGORIES = ['Food', 'Entertainment', 'Academics', 'Transportation', 'Utilities', 'Shopping', 'Others'];
-const CATEGORY_COLORS = {
-    Food: '#ff6b6b', Entertainment: '#a855f7', Academics: '#3b82f6',
-    Transportation: '#f97316', Utilities: '#06b6d4', Shopping: '#ec4899',
-    Income: '#2ed573', Others: '#8b8ba3'
+
+const CATEGORY_CONFIG = {
+    Food: { emoji: '🍕', color: '#E07A5F' },
+    Entertainment: { emoji: '🎮', color: '#9B72CF' },
+    Academics: { emoji: '📚', color: '#5B8FB9' },
+    Transportation: { emoji: '🚌', color: '#E8A838' },
+    Utilities: { emoji: '💡', color: '#5AACA8' },
+    Shopping: { emoji: '🛍️', color: '#D4739D' },
+    Income: { emoji: '💰', color: '#81B29A' },
+    Others: { emoji: '📦', color: '#9B9DB3' }
 };
 
 const initialForm = {
@@ -37,14 +42,12 @@ function Transactions() {
     const [suggestedCategory, setSuggestedCategory] = useState(null);
     const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
 
-    // Fetch transactions
     const fetchTransactions = useCallback(async () => {
         try {
             setLoading(true);
             const params = new URLSearchParams({ limit: 20, page: pagination.page });
             if (filter.type) params.append('type', filter.type);
             if (filter.category) params.append('category', filter.category);
-
             const res = await api.get(`/transactions?${params}`);
             setTransactions(res.data.data);
             setPagination(res.data.pagination);
@@ -55,11 +58,8 @@ function Transactions() {
         }
     }, [filter, pagination.page]);
 
-    useEffect(() => {
-        fetchTransactions();
-    }, [fetchTransactions]);
+    useEffect(() => { fetchTransactions(); }, [fetchTransactions]);
 
-    // Smart category suggestion on description change
     const handleDescriptionChange = async (description) => {
         setForm(prev => ({ ...prev, description }));
         if (description.length > 2 && form.type === 'expense') {
@@ -70,15 +70,12 @@ function Transactions() {
                 } else {
                     setSuggestedCategory(null);
                 }
-            } catch {
-                // Silently fail suggestion
-            }
+            } catch { setSuggestedCategory(null); }
         } else {
             setSuggestedCategory(null);
         }
     };
 
-    // Apply suggested category
     const applySuggestion = () => {
         if (suggestedCategory) {
             setForm(prev => ({ ...prev, category: suggestedCategory }));
@@ -87,7 +84,6 @@ function Transactions() {
         }
     };
 
-    // Open modal for new/edit
     const openModal = (transaction = null) => {
         if (transaction) {
             setEditingId(transaction._id);
@@ -106,7 +102,6 @@ function Transactions() {
         setShowModal(true);
     };
 
-    // Submit form
     const handleSubmit = async (e) => {
         e.preventDefault();
         const payload = {
@@ -114,7 +109,6 @@ function Transactions() {
             amount: parseFloat(form.amount),
             category: form.type === 'income' ? 'Income' : (form.category || 'Others')
         };
-
         try {
             if (editingId) {
                 await api.put(`/transactions/${editingId}`, payload);
@@ -134,16 +128,13 @@ function Transactions() {
         }
     };
 
-    // Delete transaction
     const handleDelete = async (id) => {
         if (!window.confirm('Delete this transaction?')) return;
         try {
             await api.delete(`/transactions/${id}`);
             toast.success('Transaction deleted');
             fetchTransactions();
-        } catch {
-            toast.error('Failed to delete');
-        }
+        } catch { toast.error('Failed to delete'); }
     };
 
     const formatCurrency = (amount) => {
@@ -161,46 +152,42 @@ function Transactions() {
             {/* Header */}
             <div className="page-header">
                 <div>
-                    <h1 className="page-title" style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em', marginTop: '4px' }}>Transactions</h1>
-                    <p className="page-subtitle" style={{ letterSpacing: '0.2px' }}>Track your income and expenses</p>
+                    <h1 className="page-title">Transactions</h1>
+                    <p className="page-subtitle">Track your income and expenses</p>
                 </div>
                 <button className="btn btn-primary" onClick={() => openModal()}>
                     <HiOutlinePlus size={18} /> Add Transaction
                 </button>
             </div>
 
-            {/* Filters */}
-            <div className="filter-bar" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '16px', marginBottom: '8px', scrollbarWidth: 'none' }}>
+            {/* Filters — emoji pills */}
+            <div className="filter-bar" style={{ gap: '8px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '12px', scrollbarWidth: 'none' }}>
                 <button
                     className={`filter-chip ${filter.type === '' ? 'active' : ''}`}
                     onClick={() => setFilter(f => ({ ...f, type: '' }))}
-                    style={{ padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600, border: '1px solid rgba(255,255,255,0.1)', background: filter.type === '' ? 'var(--gradient-primary)' : 'rgba(255,255,255,0.03)', color: filter.type === '' ? 'white' : 'var(--text-secondary)' }}
                 >
                     All
                 </button>
                 <button
                     className={`filter-chip ${filter.type === 'income' ? 'active' : ''}`}
                     onClick={() => setFilter(f => ({ ...f, type: 'income' }))}
-                    style={{ padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600, border: '1px solid rgba(255,255,255,0.1)', background: filter.type === 'income' ? 'var(--gradient-primary)' : 'rgba(255,255,255,0.03)', color: filter.type === 'income' ? 'white' : 'var(--text-secondary)' }}
                 >
                     💰 Income
                 </button>
                 <button
                     className={`filter-chip ${filter.type === 'expense' ? 'active' : ''}`}
                     onClick={() => setFilter(f => ({ ...f, type: 'expense' }))}
-                    style={{ padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600, border: '1px solid rgba(255,255,255,0.1)', background: filter.type === 'expense' ? 'var(--gradient-primary)' : 'rgba(255,255,255,0.03)', color: filter.type === 'expense' ? 'white' : 'var(--text-secondary)' }}
                 >
                     💸 Expenses
                 </button>
-                <div style={{ width: 1, height: 24, background: 'var(--border-glass)', margin: '0 8px', alignSelf: 'center' }} />
+                <div style={{ width: 1, height: 24, background: 'var(--border-light)', margin: '0 4px', alignSelf: 'center' }} />
                 {CATEGORIES.map(cat => (
                     <button
                         key={cat}
                         className={`filter-chip ${filter.category === cat ? 'active' : ''}`}
                         onClick={() => setFilter(f => ({ ...f, category: f.category === cat ? '' : cat }))}
-                        style={{ padding: '8px 16px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600, border: '1px solid rgba(255,255,255,0.1)', background: filter.category === cat ? 'var(--gradient-primary)' : 'rgba(255,255,255,0.03)', color: filter.category === cat ? 'white' : 'var(--text-secondary)' }}
                     >
-                        {cat}
+                        {CATEGORY_CONFIG[cat]?.emoji} {cat}
                     </button>
                 ))}
             </div>
@@ -219,47 +206,49 @@ function Transactions() {
                             {transactions.map((tx, index) => (
                                 <motion.div
                                     key={tx._id}
-                                    className="transaction-item glass-card-static"
-                                    initial={{ opacity: 0, y: 10 }}
+                                    className="transaction-item"
+                                    initial={{ opacity: 0, y: 8 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, x: -20 }}
-                                    transition={{ delay: index * 0.03 }}
-                                    whileHover={{ x: 6, backgroundColor: 'rgba(255,255,255,0.02)' }}
-                                    style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}
+                                    transition={{ delay: index * 0.03, ease: [0.16, 1, 0.3, 1] }}
+                                    whileHover={{ x: 4 }}
+                                    style={{ padding: '14px 20px', marginBottom: '6px' }}
                                 >
                                     <div
                                         className="transaction-icon"
                                         style={{
                                             background: tx.type === 'income'
-                                                ? 'rgba(46,213,115,0.15)'
-                                                : `${CATEGORY_COLORS[tx.category] || '#8b8ba3'}20`,
-                                            color: tx.type === 'income'
-                                                ? '#2ed573'
-                                                : CATEGORY_COLORS[tx.category] || '#8b8ba3'
+                                                ? 'var(--secondary-bg)'
+                                                : `${CATEGORY_CONFIG[tx.category]?.color || '#9B9DB3'}12`,
+                                            fontSize: '1.3rem',
+                                            borderRadius: 'var(--radius-md)'
                                         }}
                                     >
-                                        {tx.type === 'income' ? <HiOutlineTrendingUp /> : <HiOutlineTrendingDown />}
+                                        {tx.type === 'income' ? '💰' : (CATEGORY_CONFIG[tx.category]?.emoji || '📦')}
                                     </div>
                                     <div className="transaction-info" style={{ flex: 1 }}>
-                                        <div className="transaction-desc" style={{ fontWeight: 600, fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '4px' }}>{tx.description}</div>
-                                        <div className="transaction-meta" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                                            <span className={`category-badge ${tx.category}`} style={{ padding: '2px 8px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', color: CATEGORY_COLORS[tx.category] || 'var(--text-secondary)' }}>{tx.category}</span>
-                                            <span>•</span>
+                                        <div className="transaction-desc">{tx.description}</div>
+                                        <div className="transaction-meta">
+                                            <span className={`category-badge ${tx.category}`}>{tx.category}</span>
+                                            <span>·</span>
                                             <span>{formatDate(tx.date)}</span>
                                         </div>
                                     </div>
-                                    <div className={`transaction-amount ${tx.type}`} style={{ fontSize: '1.15rem', fontWeight: 800, marginRight: '16px', color: tx.type === 'income' ? 'var(--success-400)' : 'var(--text-primary)' }}>
+                                    <div className={`transaction-amount ${tx.type}`} style={{
+                                        fontSize: '1.1rem', fontWeight: 700, marginRight: '12px',
+                                        fontFamily: "'Outfit', sans-serif"
+                                    }}>
                                         {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
                                     </div>
-                                    <div className="transaction-actions" style={{ display: 'flex', gap: '8px' }}>
-                                        <button className="btn-icon" onClick={() => openModal(tx)} title="Edit" style={{ width: '32px', height: '32px' }}>
+                                    <div className="transaction-actions" style={{ display: 'flex', gap: '6px' }}>
+                                        <button className="btn-icon" onClick={() => openModal(tx)} title="Edit" style={{ width: 32, height: 32 }}>
                                             <HiOutlinePencil size={14} />
                                         </button>
                                         <button
                                             className="btn-icon"
                                             onClick={() => handleDelete(tx._id)}
                                             title="Delete"
-                                            style={{ color: 'var(--accent-400)', width: '32px', height: '32px', borderColor: 'rgba(255,71,87,0.2)' }}
+                                            style={{ color: 'var(--danger)', width: 32, height: 32, borderColor: 'rgba(224, 122, 95, 0.15)' }}
                                         >
                                             <HiOutlineTrash size={14} />
                                         </button>
@@ -269,7 +258,6 @@ function Transactions() {
                         </AnimatePresence>
                     </div>
 
-                    {/* Pagination */}
                     {pagination.pages > 1 && (
                         <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 24 }}>
                             {Array.from({ length: pagination.pages }, (_, i) => (
@@ -285,13 +273,13 @@ function Transactions() {
                     )}
                 </>
             ) : (
-                <div className="glass-card">
+                <div className="glass-card-static" style={{ padding: '48px 24px' }}>
                     <div className="empty-state">
-                        <div className="empty-state-icon">💳</div>
+                        <div className="empty-state-icon">🐷</div>
                         <h3>No transactions found</h3>
-                        <p>Start tracking your finances by adding your first transaction</p>
+                        <p>Your financial journey starts here! Add your first transaction to begin tracking. 🚀</p>
                         <button className="btn btn-primary" onClick={() => openModal()}>
-                            <HiOutlinePlus /> Add Transaction
+                            <HiOutlinePlus /> Add First Transaction
                         </button>
                     </div>
                 </div>
@@ -314,9 +302,9 @@ function Transactions() {
                     >
                         <motion.div
                             className="modal"
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                             onClick={(e) => e.stopPropagation()}
                         >
@@ -330,12 +318,12 @@ function Transactions() {
                             </div>
 
                             <form onSubmit={handleSubmit}>
-                                <div className="tabs" style={{ display: 'flex', gap: '8px', marginBottom: 24, padding: '4px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                {/* Type Toggle */}
+                                <div className="tabs" style={{ marginBottom: 24 }}>
                                     <button
                                         type="button"
                                         className={`tab ${form.type === 'expense' ? 'active' : ''}`}
                                         onClick={() => setForm(f => ({ ...f, type: 'expense', category: '' }))}
-                                        style={{ flex: 1, padding: '10px', borderRadius: '8px', fontWeight: 600, transition: 'all 0.2s', background: form.type === 'expense' ? 'rgba(255,255,255,0.1)' : 'transparent', color: form.type === 'expense' ? 'white' : 'var(--text-muted)' }}
                                     >
                                         💸 Expense
                                     </button>
@@ -343,15 +331,13 @@ function Transactions() {
                                         type="button"
                                         className={`tab ${form.type === 'income' ? 'active' : ''}`}
                                         onClick={() => setForm(f => ({ ...f, type: 'income', category: 'Income' }))}
-                                        style={{ flex: 1, padding: '10px', borderRadius: '8px', fontWeight: 600, transition: 'all 0.2s', background: form.type === 'income' ? 'rgba(255,255,255,0.1)' : 'transparent', color: form.type === 'income' ? 'white' : 'var(--text-muted)' }}
                                     >
                                         💰 Income
                                     </button>
                                 </div>
 
-                                {/* Amount */}
                                 <div className="form-group">
-                                    <label className="form-label">Amount ($)</label>
+                                    <label className="form-label">Amount (₹)</label>
                                     <input
                                         type="number"
                                         className="form-input"
@@ -362,10 +348,10 @@ function Transactions() {
                                         onChange={(e) => setForm(f => ({ ...f, amount: e.target.value }))}
                                         required
                                         autoFocus
+                                        style={{ fontSize: '1.2rem', fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}
                                     />
                                 </div>
 
-                                {/* Description */}
                                 <div className="form-group">
                                     <label className="form-label">Description</label>
                                     <input
@@ -377,18 +363,13 @@ function Transactions() {
                                         required
                                         maxLength={200}
                                     />
-                                    {/* AI Suggestion Badge */}
                                     {suggestedCategory && (
                                         <motion.div
                                             initial={{ opacity: 0, y: -5 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             style={{ marginTop: 8 }}
                                         >
-                                            <button
-                                                type="button"
-                                                className="suggestion-badge"
-                                                onClick={applySuggestion}
-                                            >
+                                            <button type="button" className="suggestion-badge" onClick={applySuggestion}>
                                                 <HiOutlineSparkles /> AI suggests: {suggestedCategory} — click to apply
                                             </button>
                                         </motion.div>
@@ -396,7 +377,6 @@ function Transactions() {
                                 </div>
 
                                 <div className="form-row">
-                                    {/* Category (for expenses only) */}
                                     {form.type === 'expense' && (
                                         <div className="form-group">
                                             <label className="form-label">Category</label>
@@ -408,13 +388,11 @@ function Transactions() {
                                             >
                                                 <option value="">Select category</option>
                                                 {CATEGORIES.map(cat => (
-                                                    <option key={cat} value={cat}>{cat}</option>
+                                                    <option key={cat} value={cat}>{CATEGORY_CONFIG[cat]?.emoji} {cat}</option>
                                                 ))}
                                             </select>
                                         </div>
                                     )}
-
-                                    {/* Date */}
                                     <div className="form-group">
                                         <label className="form-label">Date</label>
                                         <input
@@ -427,8 +405,7 @@ function Transactions() {
                                     </div>
                                 </div>
 
-                                {/* Submit */}
-                                <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}>
+                                <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 8, padding: '14px' }}>
                                     {editingId ? 'Update Transaction' : 'Add Transaction'}
                                 </button>
                             </form>

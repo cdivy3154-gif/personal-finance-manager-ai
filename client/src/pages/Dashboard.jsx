@@ -1,6 +1,6 @@
 /**
  * Dashboard Page
- * Summary cards, recent transactions, pie chart, and trend line chart
+ * Hero balance, asymmetric stat cards, emoji categories, warm charts, timeline transactions
  */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
@@ -16,48 +16,51 @@ import {
 } from 'react-icons/hi';
 import api from '../utils/api';
 
-// Category color mapping
-const CATEGORY_COLORS = {
-    Food: '#ff6b6b',
-    Entertainment: '#a855f7',
-    Academics: '#3b82f6',
-    Transportation: '#f97316',
-    Utilities: '#06b6d4',
-    Shopping: '#ec4899',
-    Others: '#8b8ba3'
+// Category config — emoji + warm color
+const CATEGORIES = {
+    Food: { emoji: '🍕', color: '#E07A5F' },
+    Entertainment: { emoji: '🎮', color: '#9B72CF' },
+    Academics: { emoji: '📚', color: '#5B8FB9' },
+    Transportation: { emoji: '🚌', color: '#E8A838' },
+    Utilities: { emoji: '💡', color: '#5AACA8' },
+    Shopping: { emoji: '🛍️', color: '#D4739D' },
+    Others: { emoji: '📦', color: '#9B9DB3' }
 };
 
-// Animation variants for staggered card entrance
+// Warm chart colors
+const CHART_COLORS = ['#E07A5F', '#81B29A', '#F2CC8F', '#5B8FB9', '#9B72CF', '#D4739D', '#5AACA8'];
+
+// Animation variants for staggered entrance
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
         opacity: 1,
-        transition: { staggerChildren: 0.1 }
+        transition: { staggerChildren: 0.08 }
     }
 };
 
 const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } }
+    hidden: { opacity: 0, y: 16 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] } }
 };
 
-// Custom tooltip for charts
+// Custom tooltip with warm styling
 const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
         return (
             <div style={{
-                background: 'rgba(10, 12, 22, 0.85)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '16px',
+                background: '#FFFFFF',
+                border: '1px solid rgba(61, 64, 91, 0.08)',
+                borderRadius: '12px',
                 padding: '12px 16px',
                 fontSize: '0.85rem',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-                color: '#f8fafc'
+                boxShadow: '0 8px 24px rgba(61, 64, 91, 0.1)',
+                color: '#3D405B'
             }}>
-                <p style={{ fontWeight: 600, letterSpacing: '0.5px', marginBottom: '4px' }}>{payload[0].name || ''}</p>
-                <p style={{ color: payload[0].color || 'var(--primary-400)', fontSize: '1.1rem', fontWeight: 700 }}>
+                <p style={{ fontWeight: 600, marginBottom: '4px', color: '#6B6E8A' }}>
+                    {payload[0].name || ''}
+                </p>
+                <p style={{ color: payload[0].color || '#E07A5F', fontSize: '1.1rem', fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
                     ₹{payload[0].value?.toFixed(2)}
                 </p>
             </div>
@@ -66,10 +69,20 @@ const CustomTooltip = ({ active, payload }) => {
     return null;
 };
 
+// Motivational messages
+const MOTIVATIONS = [
+    { emoji: '🔥', text: 'Keep tracking! Consistency is the key to financial freedom.' },
+    { emoji: '💡', text: 'Tip: Try the 50/30/20 rule — Needs, Wants, Savings.' },
+    { emoji: '🎯', text: 'Students who budget save 40% more on average!' },
+    { emoji: '☕', text: 'Your daily ₹200 coffee = ₹73,000 per year. Think about it!' },
+    { emoji: '🚀', text: 'Every expense tracked brings you closer to your goals.' },
+];
+
 function Dashboard() {
     const [stats, setStats] = useState(null);
     const [recentTransactions, setRecentTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [motivation] = useState(() => MOTIVATIONS[Math.floor(Math.random() * MOTIVATIONS.length)]);
 
     useEffect(() => {
         fetchDashboardData();
@@ -91,8 +104,16 @@ function Dashboard() {
         }
     };
 
-    // Format currency
     const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount || 0);
+    };
+
+    const formatCurrencyFull = (amount) => {
         return new Intl.NumberFormat('en-IN', {
             style: 'currency',
             currency: 'INR',
@@ -100,7 +121,6 @@ function Dashboard() {
         }).format(amount || 0);
     };
 
-    // Format date
     const formatDate = (dateStr) => {
         return new Date(dateStr).toLocaleDateString('en-US', {
             month: 'short', day: 'numeric'
@@ -108,10 +128,10 @@ function Dashboard() {
     };
 
     // Prepare pie chart data
-    const pieData = stats?.categoryBreakdown?.map(cat => ({
+    const pieData = stats?.categoryBreakdown?.map((cat, i) => ({
         name: cat._id,
         value: cat.total,
-        color: CATEGORY_COLORS[cat._id] || '#8b8ba3'
+        color: CATEGORIES[cat._id]?.color || CHART_COLORS[i % CHART_COLORS.length]
     })) || [];
 
     // Prepare daily trend data
@@ -123,16 +143,16 @@ function Dashboard() {
     if (loading) {
         return (
             <div>
-                <div className="page-header">
-                    <div>
-                        <div className="skeleton" style={{ width: 200, height: 28, marginBottom: 8 }} />
-                        <div className="skeleton" style={{ width: 300, height: 16 }} />
-                    </div>
-                </div>
+                {/* Skeleton hero */}
+                <div className="skeleton" style={{ height: 180, borderRadius: 24, marginBottom: 28 }} />
                 <div className="stats-grid">
                     {[1, 2, 3, 4].map(i => (
-                        <div key={i} className="skeleton" style={{ height: 130, borderRadius: 20 }} />
+                        <div key={i} className="skeleton" style={{ height: 120, borderRadius: 20 }} />
                     ))}
+                </div>
+                <div className="grid-2" style={{ marginTop: 28 }}>
+                    <div className="skeleton" style={{ height: 300, borderRadius: 20 }} />
+                    <div className="skeleton" style={{ height: 300, borderRadius: 20 }} />
                 </div>
             </div>
         );
@@ -140,36 +160,42 @@ function Dashboard() {
 
     return (
         <motion.div variants={containerVariants} initial="hidden" animate="visible">
-            {/* Page Header */}
-            <div className="page-header">
-                <div>
-                    <motion.h1 variants={cardVariants} className="page-title">
-                        Dashboard
-                    </motion.h1>
-                    <motion.p variants={cardVariants} className="page-subtitle" style={{ letterSpacing: '0.2px' }}>
-                        Your financial overview at a glance
-                    </motion.p>
+            {/* Hero Balance — BIG, bold, unmissable */}
+            <motion.div variants={cardVariants} className="hero-balance">
+                <div className="hero-balance-label">Current Balance</div>
+                <div className="hero-balance-amount">
+                    {formatCurrency(stats?.balance)}
                 </div>
-                <motion.div variants={cardVariants}>
-                    <Link to="/transactions" className="btn btn-primary">
-                        <HiOutlineCash size={18} />
-                        Add Transaction
-                    </Link>
-                </motion.div>
-            </div>
+                <div className="hero-balance-sub">
+                    <span style={{ color: 'var(--secondary-dark)', fontWeight: 600 }}>
+                        +{formatCurrency(stats?.totalIncome)}
+                    </span>
+                    {' income  ·  '}
+                    <span style={{ color: 'var(--primary)', fontWeight: 600 }}>
+                        -{formatCurrency(stats?.totalExpense)}
+                    </span>
+                    {' spent this month'}
+                </div>
+            </motion.div>
 
-            {/* Stats Cards */}
-            <motion.div variants={cardVariants} className="stats-grid">
+            {/* Motivational Tip — playful, unexpected */}
+            <motion.div variants={cardVariants} className="motivation-tip">
+                <span className="motivation-tip-icon">{motivation.emoji}</span>
+                <span>{motivation.text}</span>
+            </motion.div>
+
+            {/* Quick Stats — asymmetric grid */}
+            <motion.div variants={cardVariants} className="stats-grid" style={{
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: '18px'
+            }}>
                 <motion.div
                     className="stat-card income"
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ type: 'spring', stiffness: 300 }}
+                    whileHover={{ y: -5, transition: { type: 'spring', stiffness: 400 } }}
                 >
                     <div className="stat-card-header">
-                        <span className="stat-card-label">Total Income</span>
-                        <div className="stat-card-icon">
-                            <HiOutlineTrendingUp />
-                        </div>
+                        <span className="stat-card-label">Income</span>
+                        <div className="stat-card-icon"><HiOutlineTrendingUp /></div>
                     </div>
                     <div className="stat-card-value">{formatCurrency(stats?.totalIncome)}</div>
                     <div className="stat-card-sub">This month</div>
@@ -177,14 +203,11 @@ function Dashboard() {
 
                 <motion.div
                     className="stat-card expense"
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ type: 'spring', stiffness: 300 }}
+                    whileHover={{ y: -5, transition: { type: 'spring', stiffness: 400 } }}
                 >
                     <div className="stat-card-header">
-                        <span className="stat-card-label">Total Expenses</span>
-                        <div className="stat-card-icon">
-                            <HiOutlineTrendingDown />
-                        </div>
+                        <span className="stat-card-label">Expenses</span>
+                        <div className="stat-card-icon"><HiOutlineTrendingDown /></div>
                     </div>
                     <div className="stat-card-value">{formatCurrency(stats?.totalExpense)}</div>
                     <div className="stat-card-sub">This month</div>
@@ -192,39 +215,33 @@ function Dashboard() {
 
                 <motion.div
                     className="stat-card balance"
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ type: 'spring', stiffness: 300 }}
+                    whileHover={{ y: -5, transition: { type: 'spring', stiffness: 400 } }}
                 >
                     <div className="stat-card-header">
                         <span className="stat-card-label">Balance</span>
-                        <div className="stat-card-icon">
-                            <HiOutlineCash />
-                        </div>
+                        <div className="stat-card-icon"><HiOutlineCash /></div>
                     </div>
                     <div className="stat-card-value">{formatCurrency(stats?.balance)}</div>
-                    <div className="stat-card-sub">Income - Expenses</div>
+                    <div className="stat-card-sub">Income − Expenses</div>
                 </motion.div>
 
                 <motion.div
                     className="stat-card savings"
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ type: 'spring', stiffness: 300 }}
+                    whileHover={{ y: -5, transition: { type: 'spring', stiffness: 400 } }}
                 >
                     <div className="stat-card-header">
                         <span className="stat-card-label">Savings Rate</span>
-                        <div className="stat-card-icon">
-                            <HiOutlineSparkles />
-                        </div>
+                        <div className="stat-card-icon"><HiOutlineSparkles /></div>
                     </div>
                     <div className="stat-card-value">{stats?.savingsRate || 0}%</div>
-                    <div className="stat-card-sub">Of total income saved</div>
+                    <div className="stat-card-sub">Of income saved</div>
                 </motion.div>
             </motion.div>
 
             {/* Charts Row */}
             <motion.div variants={cardVariants} className="grid-2" style={{ marginBottom: 'var(--space-xl)' }}>
-                {/* Spending by Category */}
-                <div className="glass-card">
+                {/* Spending by Category — Donut */}
+                <div className="glass-card-static" style={{ padding: '24px' }}>
                     <div className="chart-header">
                         <h3 className="chart-title">Spending by Category</h3>
                     </div>
@@ -236,15 +253,16 @@ function Dashboard() {
                                         data={pieData}
                                         cx="50%"
                                         cy="50%"
-                                        innerRadius={65}
+                                        innerRadius={60}
                                         outerRadius={100}
-                                        paddingAngle={3}
+                                        paddingAngle={4}
                                         dataKey="value"
                                         animationBegin={0}
-                                        animationDuration={800}
+                                        animationDuration={1000}
+                                        stroke="none"
                                     >
                                         {pieData.map((entry, index) => (
-                                            <Cell key={index} fill={entry.color} stroke="transparent" />
+                                            <Cell key={index} fill={entry.color} />
                                         ))}
                                     </Pie>
                                     <Tooltip content={<CustomTooltip />} />
@@ -252,26 +270,38 @@ function Dashboard() {
                             </ResponsiveContainer>
                         ) : (
                             <div className="empty-state">
-                                <p>No expense data yet</p>
+                                <div className="empty-state-icon">🐷</div>
+                                <h3>No expenses yet</h3>
+                                <p>Your piggy bank is still full! Start tracking to see where your money goes.</p>
                             </div>
                         )}
-                        {/* Category Legend */}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginTop: '16px' }}>
-                            {pieData.map((cat, i) => (
-                                <span key={i} className={`category-badge ${cat.name}`} style={{ fontSize: '0.75rem', padding: '4px 10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px' }}>
-                                    <span style={{
-                                        width: 8, height: 8, borderRadius: '50%',
-                                        background: cat.color, display: 'inline-block'
-                                    }}></span>
-                                    {cat.name}
-                                </span>
-                            ))}
-                        </div>
+                        {/* Category Legend — with emojis */}
+                        {pieData.length > 0 && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginTop: '16px' }}>
+                                {pieData.map((cat, i) => (
+                                    <span key={i} style={{
+                                        fontSize: '0.78rem',
+                                        padding: '5px 12px',
+                                        background: 'var(--bg-surface)',
+                                        border: '1px solid var(--border-light)',
+                                        borderRadius: '20px',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        color: 'var(--text-secondary)',
+                                        fontWeight: 500
+                                    }}>
+                                        <span>{CATEGORIES[cat.name]?.emoji || '📦'}</span>
+                                        {cat.name}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Daily Spending Trend */}
-                <div className="glass-card">
+                {/* Daily Spending Trend — warm gradient fill */}
+                <div className="glass-card-static" style={{ padding: '24px' }}>
                     <div className="chart-header">
                         <h3 className="chart-title">Daily Spending Trend</h3>
                     </div>
@@ -280,28 +310,46 @@ function Dashboard() {
                             <ResponsiveContainer width="100%" height={280}>
                                 <AreaChart data={trendData}>
                                     <defs>
-                                        <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="var(--primary-400)" stopOpacity={0.4} />
-                                            <stop offset="95%" stopColor="var(--primary-400)" stopOpacity={0} />
+                                        <linearGradient id="colorAmountWarm" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#E07A5F" stopOpacity={0.25} />
+                                            <stop offset="95%" stopColor="#E07A5F" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)' }} dy={10} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text-muted)' }} dx={-10} />
-                                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(61, 64, 91, 0.06)" />
+                                    <XAxis
+                                        dataKey="day"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fontSize: 11, fill: '#9B9DB3' }}
+                                        dy={10}
+                                    />
+                                    <YAxis
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fontSize: 11, fill: '#9B9DB3' }}
+                                        dx={-10}
+                                    />
+                                    <Tooltip
+                                        content={<CustomTooltip />}
+                                        cursor={{ stroke: 'rgba(224, 122, 95, 0.15)', strokeWidth: 1, strokeDasharray: '4 4' }}
+                                    />
                                     <Area
                                         type="monotone"
                                         dataKey="amount"
-                                        stroke="var(--primary-400)"
+                                        stroke="#E07A5F"
                                         strokeWidth={3}
-                                        fill="url(#colorAmount)"
+                                        fill="url(#colorAmountWarm)"
+                                        dot={{ fill: '#E07A5F', r: 4, strokeWidth: 2, stroke: '#FFFFFF' }}
+                                        activeDot={{ r: 6, stroke: '#E07A5F', strokeWidth: 2, fill: '#FFFFFF' }}
                                         animationDuration={1500}
                                     />
                                 </AreaChart>
                             </ResponsiveContainer>
                         ) : (
                             <div className="empty-state">
-                                <p>No spending data to show trends</p>
+                                <div className="empty-state-icon">📊</div>
+                                <h3>No trends yet</h3>
+                                <p>Add a few expenses and watch your spending patterns unfold!</p>
                             </div>
                         )}
                     </div>
@@ -310,68 +358,73 @@ function Dashboard() {
 
             {/* Bottom Row: Recent Transactions + Insights */}
             <motion.div variants={cardVariants} className="grid-2">
-                {/* Recent Transactions */}
-                <div className="glass-card">
+                {/* Recent Transactions — with category emojis */}
+                <div className="glass-card-static" style={{ padding: '24px' }}>
                     <div className="chart-header">
                         <h3 className="chart-title">Recent Transactions</h3>
-                        <Link to="/transactions" className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '6px 14px' }}>
+                        <Link to="/transactions" className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '6px 14px', borderWidth: '1.5px' }}>
                             View All <HiOutlineArrowRight />
                         </Link>
                     </div>
                     {recentTransactions.length > 0 ? (
                         <div className="transaction-list">
-                            {recentTransactions.map((tx) => (
+                            {recentTransactions.map((tx, index) => (
                                 <motion.div
                                     key={tx._id}
                                     className="transaction-item"
-                                    whileHover={{ x: 6, backgroundColor: 'rgba(255,255,255,0.02)' }}
-                                    transition={{ type: 'spring', stiffness: 400 }}
-                                    style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '16px', borderRadius: 0, border: 'none', borderBottomWidth: '1px', borderBottomStyle: 'solid', borderBottomColor: 'rgba(255,255,255,0.05)', marginBottom: '8px' }}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.06, ease: [0.16, 1, 0.3, 1] }}
+                                    whileHover={{ x: 4 }}
+                                    style={{ border: '1px solid var(--border-light)', borderRadius: 'var(--radius-md)' }}
                                 >
                                     <div
                                         className="transaction-icon"
                                         style={{
                                             background: tx.type === 'income'
-                                                ? 'rgba(46, 213, 115, 0.15)'
-                                                : `${CATEGORY_COLORS[tx.category]}20`,
-                                            color: tx.type === 'income'
-                                                ? '#2ed573'
-                                                : CATEGORY_COLORS[tx.category] || '#8b8ba3'
+                                                ? 'var(--secondary-bg)'
+                                                : `${CATEGORIES[tx.category]?.color || '#9B9DB3'}12`,
+                                            borderRadius: 'var(--radius-md)',
+                                            fontSize: '1.3rem'
                                         }}
                                     >
-                                        {tx.type === 'income' ? <HiOutlineTrendingUp /> : <HiOutlineTrendingDown />}
+                                        {tx.type === 'income' ? '💰' : (CATEGORIES[tx.category]?.emoji || '📦')}
                                     </div>
                                     <div className="transaction-info">
                                         <div className="transaction-desc">{tx.description}</div>
                                         <div className="transaction-meta">
                                             <span className={`category-badge ${tx.category}`}>{tx.category}</span>
-                                            <span>•</span>
+                                            <span>·</span>
                                             <span>{formatDate(tx.date)}</span>
                                         </div>
                                     </div>
-                                    <div className={`transaction-amount ${tx.type}`} style={{ fontSize: '1.05rem', fontWeight: 700 }}>
-                                        {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
+                                    <div className={`transaction-amount ${tx.type}`} style={{
+                                        fontSize: '1.05rem',
+                                        fontWeight: 700,
+                                        fontFamily: "'Outfit', sans-serif"
+                                    }}>
+                                        {tx.type === 'income' ? '+' : '-'}{formatCurrencyFull(tx.amount)}
                                     </div>
                                 </motion.div>
                             ))}
                         </div>
                     ) : (
                         <div className="empty-state">
-                            <div className="empty-state-icon">💳</div>
-                            <h3>No transactions yet</h3>
-                            <p>Add your first transaction to get started!</p>
+                            <div className="empty-state-icon">🐷</div>
+                            <h3>Your financial journey starts here! 🚀</h3>
+                            <p>Add your first transaction to begin tracking your money like a pro.</p>
                             <Link to="/transactions" className="btn btn-primary">
-                                Add Transaction
+                                Add First Expense
                             </Link>
                         </div>
                     )}
                 </div>
 
-                {/* AI Insights */}
-                <div className="glass-card">
+                {/* Smart Insights */}
+                <div className="glass-card-static" style={{ padding: '24px' }}>
                     <div className="chart-header">
-                        <h3 className="chart-title">
-                            <HiOutlineLightBulb style={{ color: '#ffa502', marginRight: 8 }} />
+                        <h3 className="chart-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '1.2rem' }}>💡</span>
                             Smart Insights
                         </h3>
                     </div>
@@ -381,19 +434,20 @@ function Dashboard() {
                                 <motion.div
                                     key={i}
                                     className="insight-item"
-                                    initial={{ opacity: 0, x: -10 }}
+                                    initial={{ opacity: 0, x: -8 }}
                                     animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: i * 0.1 }}
+                                    transition={{ delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
                                 >
-                                    {insight}
+                                    <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>📌</span>
+                                    <span>{insight}</span>
                                 </motion.div>
                             ))}
                         </div>
                     ) : (
                         <div className="empty-state">
                             <div className="empty-state-icon">🤖</div>
-                            <h3>No insights yet</h3>
-                            <p>Add more transactions to unlock AI-powered spending insights</p>
+                            <h3>Insights are brewing...</h3>
+                            <p>Add more transactions to unlock AI-powered spending insights and smart tips!</p>
                         </div>
                     )}
                 </div>

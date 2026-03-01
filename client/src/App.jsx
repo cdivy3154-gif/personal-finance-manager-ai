@@ -23,14 +23,14 @@ function App() {
                     duration: 4000,
                     className: 'toast-custom',
                     style: {
-                        background: 'rgba(10, 12, 22, 0.95)',
-                        backdropFilter: 'blur(16px)',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        color: 'var(--text-primary)',
+                        background: '#FFFFFF',
+                        border: '1px solid rgba(61, 64, 91, 0.08)',
+                        color: '#3D405B',
                         borderRadius: '12px',
-                        fontFamily: 'var(--font-primary)',
+                        fontFamily: "'Inter', sans-serif",
                         fontSize: '0.9rem',
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
+                        boxShadow: '0 8px 24px rgba(61, 64, 91, 0.1)',
+                        padding: '14px 18px',
                     },
                 }}
             />

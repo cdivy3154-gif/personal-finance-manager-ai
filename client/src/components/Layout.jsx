@@ -1,6 +1,6 @@
 /**
  * Layout Component
- * App shell with glassmorphic sidebar and mobile bottom navigation
+ * Warm sidebar with student personality, mobile bottom nav
  */
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
@@ -13,42 +13,50 @@ import {
     HiOutlineUserGroup,
     HiOutlineStar,
     HiOutlineMenu,
-    HiOutlineX,
-    HiOutlineMoon,
-    HiOutlineSun
+    HiOutlineX
 } from 'react-icons/hi';
 
 const navItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: HiOutlineHome },
-    { path: '/transactions', label: 'Transactions', icon: HiOutlineCreditCard },
-    { path: '/budget', label: 'Budget', icon: HiOutlineChartPie },
-    { path: '/analytics', label: 'Analytics', icon: HiOutlineChartBar },
-    { path: '/bills', label: 'Split Bills', icon: HiOutlineUserGroup },
-    { path: '/goals', label: 'Goals', icon: HiOutlineStar },
+    { path: '/dashboard', label: 'Dashboard', icon: HiOutlineHome, emoji: '🏠' },
+    { path: '/transactions', label: 'Transactions', icon: HiOutlineCreditCard, emoji: '💳' },
+    { path: '/budget', label: 'Budget', icon: HiOutlineChartPie, emoji: '📊' },
+    { path: '/analytics', label: 'Analytics', icon: HiOutlineChartBar, emoji: '📈' },
+    { path: '/bills', label: 'Split Bills', icon: HiOutlineUserGroup, emoji: '👥' },
+    { path: '/goals', label: 'Goals', icon: HiOutlineStar, emoji: '🎯' },
+];
+
+// Motivational tips for sidebar footer
+const TIPS = [
+    "☕ That daily latte adds up to ₹36,500/year!",
+    "🎯 Students who track expenses save 2x more.",
+    "📚 Small savings today = big freedom tomorrow!",
+    "💡 The 50/30/20 rule: Needs/Wants/Savings",
+    "🚀 Every rupee tracked is a rupee saved!"
 ];
 
 function Layout({ children }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const location = useLocation();
+    const [tip] = useState(() => TIPS[Math.floor(Math.random() * TIPS.length)]);
 
-    // Dark Mode State
-    const [theme, setTheme] = useState(() => {
-        return localStorage.getItem('theme') || 'dark'; // default to dark
-    });
-
-    useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-    }, [theme]);
-
-    const toggleTheme = () => {
-        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    // Get current greeting
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return 'Good morning';
+        if (hour < 17) return 'Good afternoon';
+        return 'Good evening';
     };
 
     // Close mobile menu when route changes
     useEffect(() => {
         setIsMobileMenuOpen(false);
     }, [location.pathname]);
+
+    // Get page title from route
+    const getPageTitle = () => {
+        const item = navItems.find(n => n.path === location.pathname);
+        return item ? item.label : 'Overview';
+    };
 
     return (
         <div className="app-layout">
@@ -79,7 +87,8 @@ function Layout({ children }) {
                         style={{
                             position: 'fixed',
                             inset: 0,
-                            background: 'rgba(0,0,0,0.5)',
+                            background: 'rgba(61, 64, 91, 0.2)',
+                            backdropFilter: 'blur(4px)',
                             zIndex: 99,
                             display: 'none',
                         }}
@@ -112,41 +121,67 @@ function Layout({ children }) {
                     ))}
                 </nav>
 
-
+                {/* Motivational footer */}
+                <div className="sidebar-footer">
+                    <div className="sidebar-footer-card">
+                        <p>{tip}</p>
+                        <span className="version">v2.0 — Made with ❤️</span>
+                    </div>
+                </div>
             </aside>
 
             {/* Main Content */}
             <main className="main-content">
                 {/* Top Navbar */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-xl)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
                     <div>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Welcome back, Student 👋</p>
-                        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em', marginTop: '4px' }}>Overview</h1>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500, letterSpacing: '0.2px' }}>
+                            {getGreeting()}, Student 👋
+                        </p>
+                        <h1 style={{
+                            fontFamily: 'var(--font-display)',
+                            fontSize: '1.85rem',
+                            fontWeight: 700,
+                            letterSpacing: '-0.02em',
+                            marginTop: '4px',
+                            color: 'var(--text-primary)'
+                        }}>
+                            {getPageTitle()}
+                        </h1>
                     </div>
-                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                        <button
-                            onClick={toggleTheme}
-                            className="btn-icon"
-                            title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
-                        >
-                            {theme === 'dark' ? <HiOutlineSun size={20} /> : <HiOutlineMoon size={20} />}
-                        </button>
-                        <div style={{ width: 44, height: 44, borderRadius: 'var(--radius-full)', background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 700, color: 'white', boxShadow: 'var(--shadow-glow)', cursor: 'pointer', border: '2px solid rgba(255,255,255,0.2)' }}>
-                            S
+                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                        {/* Student avatar */}
+                        <div style={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: 'var(--radius-full)',
+                            background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.25rem',
+                            color: 'white',
+                            boxShadow: 'var(--shadow-primary)',
+                            cursor: 'pointer',
+                            border: '2.5px solid var(--bg-card)',
+                            transition: 'transform 200ms ease',
+                        }}>
+                            🎓
                         </div>
                     </div>
                 </div>
+
                 <motion.div
                     key={location.pathname}
-                    initial={{ opacity: 0, y: 15 }}
+                    initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                 >
                     {children}
                 </motion.div>
             </main>
 
-            {/* Mobile Bottom Navigation */}
+            {/* Mobile Bottom Navigation — 64px touch targets */}
             <nav className="mobile-nav">
                 <div className="mobile-nav-items">
                     {navItems.slice(0, 5).map((item) => (
@@ -163,11 +198,11 @@ function Layout({ children }) {
             </nav>
 
             <style>{`
-        @media (max-width: 768px) {
-          .mobile-toggle { display: flex !important; }
-          .sidebar-overlay { display: block !important; }
-        }
-      `}</style>
+                @media (max-width: 768px) {
+                    .mobile-toggle { display: flex !important; }
+                    .sidebar-overlay { display: block !important; }
+                }
+            `}</style>
         </div>
     );
 }

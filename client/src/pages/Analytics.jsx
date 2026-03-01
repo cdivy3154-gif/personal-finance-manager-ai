@@ -1,47 +1,55 @@
 /**
  * Analytics Page
- * Monthly/weekly breakdowns, category pie chart, expense trends, budget vs actual
+ * Warm charts with thick strokes, gradient fills, and brand colors
  */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-    PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
-    AreaChart, Area, LineChart, Line
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+    PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, Legend
 } from 'recharts';
-import {
-    HiOutlineChevronLeft, HiOutlineChevronRight,
-    HiOutlineLightBulb
-} from 'react-icons/hi';
 import api from '../utils/api';
 
-const CATEGORY_COLORS = {
-    Food: '#ff6b6b', Entertainment: '#a855f7', Academics: '#3b82f6',
-    Transportation: '#f97316', Utilities: '#06b6d4', Shopping: '#ec4899',
-    Others: '#8b8ba3'
+const CATEGORY_CONFIG = {
+    Food: { emoji: '🍕', color: '#E07A5F' },
+    Entertainment: { emoji: '🎮', color: '#9B72CF' },
+    Academics: { emoji: '📚', color: '#5B8FB9' },
+    Transportation: { emoji: '🚌', color: '#E8A838' },
+    Utilities: { emoji: '💡', color: '#5AACA8' },
+    Shopping: { emoji: '🛍️', color: '#D4739D' },
+    Others: { emoji: '📦', color: '#9B9DB3' }
 };
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const CHART_COLORS = ['#E07A5F', '#81B29A', '#F2CC8F', '#5B8FB9', '#9B72CF', '#D4739D', '#5AACA8'];
 
-const CustomTooltip = ({ active, payload, label }) => {
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.08 } }
+};
+
+const cardVariants = {
+    hidden: { opacity: 0, y: 14 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } }
+};
+
+// Warm custom tooltip
+const WarmTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
         return (
             <div style={{
-                background: 'rgba(10, 12, 22, 0.95)',
-                backdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: '#FFFFFF',
+                border: '1px solid rgba(61, 64, 91, 0.08)',
                 borderRadius: '12px',
                 padding: '12px 16px',
                 fontSize: '0.85rem',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
+                boxShadow: '0 8px 24px rgba(61, 64, 91, 0.1)',
+                color: '#3D405B'
             }}>
-                <p style={{ color: 'var(--text-primary)', fontWeight: 700, marginBottom: 8, fontFamily: 'var(--font-display)', fontSize: '0.95rem' }}>{label}</p>
-                {payload.map((entry, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: entry.color }} />
-                        <span style={{ color: 'var(--text-secondary)' }}>{entry.name}:</span>
-                        <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>₹{entry.value?.toFixed(2)}</span>
-                    </div>
+                <p style={{ fontWeight: 600, marginBottom: 4, color: '#6B6E8A', fontSize: '0.78rem' }}>{label}</p>
+                {payload.map((p, i) => (
+                    <p key={i} style={{ color: p.color, fontWeight: 700, fontFamily: "'Outfit', sans-serif", fontSize: '1rem' }}>
+                        {p.name}: ₹{p.value?.toLocaleString('en-IN')}
+                    </p>
                 ))}
             </div>
         );
@@ -50,84 +58,53 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 function Analytics() {
-    const [month, setMonth] = useState(() => {
-        const now = new Date();
-        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    });
     const [stats, setStats] = useState(null);
-    const [utilization, setUtilization] = useState(null);
-    const [activeTab, setActiveTab] = useState('overview');
+    const [budgetComparison, setBudgetComparison] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [activeView, setActiveView] = useState('overview');
 
     useEffect(() => {
-        fetchAnalytics();
-    }, [month]);
-
-    const fetchAnalytics = async () => {
-        try {
-            setLoading(true);
-            const [y, m] = month.split('-');
-            const [statsRes, utilRes] = await Promise.all([
-                api.get(`/transactions/stats?month=${m}&year=${y}`),
-                api.get(`/budget/${month}/utilization`)
-            ]);
-            setStats(statsRes.data.data);
-            setUtilization(utilRes.data.data);
-        } catch (error) {
-            console.error('Error fetching analytics:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const changeMonth = (direction) => {
-        const [y, m] = month.split('-').map(Number);
-        const date = new Date(y, m - 1 + direction, 1);
-        setMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
-    };
-
-    const formatMonthDisplay = (monthStr) => {
-        const [y, m] = monthStr.split('-');
-        return new Date(y, m - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-    };
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const [statsRes, budgetRes] = await Promise.all([
+                    api.get('/transactions/stats'),
+                    api.get(`/budget/${new Date().toISOString().slice(0, 7)}/utilization`)
+                ]);
+                setStats(statsRes.data.data);
+                setBudgetComparison(budgetRes.data.data);
+            } catch (error) {
+                console.error('Error fetching analytics:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
 
     const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount || 0);
+        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(amount || 0);
     };
 
     // Prepare data
-    const pieData = stats?.categoryBreakdown?.map(cat => ({
+    const pieData = stats?.categoryBreakdown?.map((cat, i) => ({
         name: cat._id,
         value: cat.total,
-        count: cat.count,
-        color: CATEGORY_COLORS[cat._id] || '#8b8ba3'
+        color: CATEGORY_CONFIG[cat._id]?.color || CHART_COLORS[i % CHART_COLORS.length],
+        emoji: CATEGORY_CONFIG[cat._id]?.emoji || '📦'
     })) || [];
 
-    const dailyTrendData = stats?.dailyTrend?.map(d => ({
+    const trendData = stats?.dailyTrend?.map(d => ({
         day: d._id,
         amount: d.total
     })) || [];
 
-    // Budget vs Actual comparison data
-    const budgetVsActual = utilization?.categories?.filter(c => c.budgetLimit > 0).map(c => ({
-        name: c.category,
+    const budgetCompareData = budgetComparison?.categories?.map(c => ({
+        category: c.category,
         budget: c.budgetLimit,
-        actual: c.spent,
-        fill: CATEGORY_COLORS[c.category] || '#8b8ba3'
-    })) || [];
-
-    // Monthly trend data
-    const monthlyTrendData = (() => {
-        if (!stats?.monthlyTrend) return [];
-        const map = {};
-        stats.monthlyTrend.forEach(item => {
-            const key = `${MONTHS[item._id.month - 1]}`;
-            if (!map[key]) map[key] = { month: key, income: 0, expense: 0 };
-            if (item._id.type === 'income') map[key].income = item.total;
-            if (item._id.type === 'expense') map[key].expense = item.total;
-        });
-        return Object.values(map);
-    })();
+        spent: c.spent,
+        emoji: CATEGORY_CONFIG[c.category]?.emoji || '📦'
+    })).filter(c => c.budget > 0 || c.spent > 0) || [];
 
     if (loading) {
         return (
@@ -144,268 +121,172 @@ function Analytics() {
     }
 
     return (
-        <div>
-            {/* Header */}
-            <div className="page-header" style={{ marginBottom: '24px' }}>
+        <motion.div variants={containerVariants} initial="hidden" animate="visible">
+            <div className="page-header">
                 <div>
-                    <h1 className="page-title" style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em', marginTop: '4px' }}>Analytics</h1>
-                    <p className="page-subtitle" style={{ letterSpacing: '0.2px' }}>Deep dive into your spending patterns</p>
+                    <h1 className="page-title">Analytics</h1>
+                    <p className="page-subtitle">Deep dive into your spending patterns</p>
                 </div>
             </div>
 
-            {/* Month Picker */}
-            <div className="month-picker" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: 32, fontSize: '1.1rem', fontWeight: 600 }}>
-                <button className="btn-icon" onClick={() => changeMonth(-1)} style={{ width: '36px', height: '36px', borderRadius: '50%' }}>
-                    <HiOutlineChevronLeft />
+            {/* View Toggle */}
+            <motion.div variants={cardVariants} className="tabs" style={{ maxWidth: 360 }}>
+                <button className={`tab ${activeView === 'overview' ? 'active' : ''}`} onClick={() => setActiveView('overview')}>
+                    📊 Overview
                 </button>
-                <span style={{ minWidth: '140px', textAlign: 'center' }}>{formatMonthDisplay(month)}</span>
-                <button className="btn-icon" onClick={() => changeMonth(1)} style={{ width: '36px', height: '36px', borderRadius: '50%' }}>
-                    <HiOutlineChevronRight />
+                <button className={`tab ${activeView === 'trends' ? 'active' : ''}`} onClick={() => setActiveView('trends')}>
+                    📈 Trends
                 </button>
-            </div>
+                <button className={`tab ${activeView === 'budget' ? 'active' : ''}`} onClick={() => setActiveView('budget')}>
+                    🎯 Budget
+                </button>
+            </motion.div>
 
-            {/* Tab Navigation */}
-            <div className="tabs" style={{ display: 'flex', gap: '8px', marginBottom: 32, padding: '4px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', width: 'fit-content' }}>
-                {['overview', 'trends', 'budget'].map(tab => (
-                    <button
-                        key={tab}
-                        className={`tab ${activeTab === tab ? 'active' : ''}`}
-                        onClick={() => setActiveTab(tab)}
-                        style={{ padding: '8px 24px', borderRadius: '8px', fontWeight: 600, transition: 'all 0.2s', background: activeTab === tab ? 'rgba(255,255,255,0.1)' : 'transparent', color: activeTab === tab ? 'white' : 'var(--text-muted)' }}
-                    >
-                        {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                    </button>
-                ))}
-            </div>
-
-            {/* Overview Tab */}
-            {activeTab === 'overview' && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                    {/* Summary Row */}
-                    <div className="stats-grid" style={{ marginBottom: 24 }}>
-                        <div className="stat-card income">
-                            <span className="stat-card-label">Income</span>
-                            <div className="stat-card-value">{formatCurrency(stats?.totalIncome)}</div>
-                        </div>
-                        <div className="stat-card expense">
-                            <span className="stat-card-label">Expenses</span>
-                            <div className="stat-card-value">{formatCurrency(stats?.totalExpense)}</div>
-                        </div>
-                        <div className="stat-card balance">
-                            <span className="stat-card-label">Net</span>
-                            <div className="stat-card-value">{formatCurrency(stats?.balance)}</div>
-                        </div>
-                        <div className="stat-card savings">
-                            <span className="stat-card-label">Transactions</span>
-                            <div className="stat-card-value">{stats?.transactionCount || 0}</div>
-                        </div>
-                    </div>
-
-                    <div className="grid-2">
-                        {/* Category Breakdown Pie */}
-                        <div className="glass-card-static" style={{ padding: '24px' }}>
-                            <h3 className="chart-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.2rem', marginBottom: 24 }}>Spending Distribution</h3>
+            {activeView === 'overview' && (
+                <motion.div variants={containerVariants} initial="hidden" animate="visible">
+                    {/* Spending Breakdown */}
+                    <motion.div variants={cardVariants} className="grid-2" style={{ marginBottom: 28 }}>
+                        {/* Pie Chart */}
+                        <div className="glass-card-static" style={{ padding: 24 }}>
+                            <h3 className="chart-title" style={{ marginBottom: 18 }}>Spending Breakdown</h3>
                             {pieData.length > 0 ? (
                                 <>
-                                    <ResponsiveContainer width="100%" height={260}>
+                                    <ResponsiveContainer width="100%" height={300}>
                                         <PieChart>
                                             <Pie
                                                 data={pieData}
                                                 cx="50%"
                                                 cy="50%"
-                                                innerRadius={65}
-                                                outerRadius={95}
-                                                paddingAngle={4}
+                                                innerRadius={70}
+                                                outerRadius={110}
+                                                paddingAngle={3}
                                                 dataKey="value"
-                                                animationDuration={800}
                                                 stroke="none"
+                                                animationDuration={1000}
                                             >
                                                 {pieData.map((entry, i) => (
-                                                    <Cell key={i} fill={entry.color} stroke="transparent" />
+                                                    <Cell key={i} fill={entry.color} />
                                                 ))}
                                             </Pie>
-                                            <Tooltip content={<CustomTooltip />} />
+                                            <Tooltip content={<WarmTooltip />} />
                                         </PieChart>
                                     </ResponsiveContainer>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
-                                        {pieData.map((cat, i) => {
-                                            const total = pieData.reduce((s, c) => s + c.value, 0);
-                                            const pct = ((cat.value / total) * 100).toFixed(1);
-                                            return (
-                                                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                                        <span style={{
-                                                            width: 12, height: 12, borderRadius: '4px',
-                                                            background: cat.color, display: 'inline-block'
-                                                        }} />
-                                                        <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-primary)' }}>{cat.name}</span>
-                                                    </div>
-                                                    <div style={{ display: 'flex', gap: 16, fontSize: '0.9rem', alignItems: 'center' }}>
-                                                        <span style={{ color: 'var(--text-muted)' }}>{pct}%</span>
-                                                        <span style={{ fontWeight: 600, fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>{formatCurrency(cat.value)}</span>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 16, justifyContent: 'center' }}>
+                                        {pieData.map((cat, i) => (
+                                            <span key={i} style={{
+                                                fontSize: '0.78rem', padding: '5px 12px',
+                                                background: 'var(--bg-surface)', border: '1px solid var(--border-light)',
+                                                borderRadius: 20, display: 'inline-flex', alignItems: 'center', gap: 6,
+                                                color: 'var(--text-secondary)', fontWeight: 500
+                                            }}>
+                                                <span>{cat.emoji}</span>{cat.name}: {formatCurrency(cat.value)}
+                                            </span>
+                                        ))}
                                     </div>
                                 </>
                             ) : (
                                 <div className="empty-state">
-                                    <p>No expense data for this month</p>
+                                    <div className="empty-state-icon">📊</div>
+                                    <h3>No data yet</h3>
+                                    <p>Add some expenses to see your spending breakdown.</p>
                                 </div>
                             )}
                         </div>
 
-                        {/* Daily Spending */}
-                        <div className="glass-card-static" style={{ padding: '24px' }}>
-                            <h3 className="chart-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.2rem', marginBottom: 24 }}>Daily Spending</h3>
-                            {dailyTrendData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height={380}>
-                                    <AreaChart data={dailyTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                        <defs>
-                                            <linearGradient id="colorDailyAnalytics" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="var(--primary-400)" stopOpacity={0.4} />
-                                                <stop offset="95%" stopColor="var(--primary-400)" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                                        <XAxis dataKey="day" tick={{ fontSize: 11 }} />
-                                        <YAxis tick={{ fontSize: 11 }} />
-                                        <Tooltip content={<CustomTooltip />} />
-                                        <Area
-                                            type="monotone"
-                                            dataKey="amount"
-                                            name="Spending"
-                                            stroke="#6c2fff"
-                                            strokeWidth={2}
-                                            fill="url(#colorDailyAnalytics)"
-                                        />
-                                    </AreaChart>
+                        {/* Top Categories Bar Chart */}
+                        <div className="glass-card-static" style={{ padding: 24 }}>
+                            <h3 className="chart-title" style={{ marginBottom: 18 }}>Top Categories</h3>
+                            {pieData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height={320}>
+                                    <BarChart data={pieData.slice(0, 6)} layout="vertical" barCategoryGap={8}>
+                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(61, 64, 91, 0.06)" />
+                                        <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#9B9DB3' }} />
+                                        <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#3D405B', fontWeight: 500 }} width={100} />
+                                        <Tooltip content={<WarmTooltip />} />
+                                        <Bar dataKey="value" radius={[0, 6, 6, 0]} animationDuration={1200}>
+                                            {pieData.slice(0, 6).map((entry, i) => (
+                                                <Cell key={i} fill={entry.color} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
                                 </ResponsiveContainer>
                             ) : (
                                 <div className="empty-state">
-                                    <p>No data to display</p>
+                                    <div className="empty-state-icon">📈</div>
+                                    <h3>Nothing here yet</h3>
+                                    <p>Start tracking expenses to discover your top spending categories.</p>
                                 </div>
                             )}
                         </div>
-                    </div>
-
-                    {/* Insights */}
-                    {stats?.insights && stats.insights.length > 0 && (
-                        <div className="glass-card" style={{ marginTop: 24 }}>
-                            <h3 className="chart-title" style={{ marginBottom: 16 }}>
-                                <HiOutlineLightBulb style={{ color: '#ffa502', marginRight: 8 }} />
-                                AI Insights
-                            </h3>
-                            <div className="insights-container">
-                                {stats.insights.map((insight, i) => (
-                                    <motion.div
-                                        key={i}
-                                        className="insight-item"
-                                        initial={{ opacity: 0, x: -10 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: i * 0.1 }}
-                                    >
-                                        {insight}
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                    </motion.div>
                 </motion.div>
             )}
 
-            {/* Trends Tab */}
-            {activeTab === 'trends' && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                    <div className="glass-card-static" style={{ marginBottom: 24, padding: '24px' }}>
-                        <h3 className="chart-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.2rem', marginBottom: 24 }}>Income vs Expenses (Last 6 Months)</h3>
-                        {monthlyTrendData.length > 0 ? (
+            {activeView === 'trends' && (
+                <motion.div variants={containerVariants} initial="hidden" animate="visible">
+                    {/* Daily Spending Trend */}
+                    <motion.div variants={cardVariants} className="glass-card-static" style={{ padding: 24, marginBottom: 28 }}>
+                        <h3 className="chart-title" style={{ marginBottom: 18 }}>Daily Spending Trend</h3>
+                        {trendData.length > 0 ? (
                             <ResponsiveContainer width="100%" height={350}>
-                                <BarChart data={monthlyTrendData} barGap={8} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} dy={10} />
-                                    <YAxis tick={{ fontSize: 12, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} dx={-10} />
-                                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
-                                    <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
-                                    <Bar dataKey="income" name="Income" fill="var(--success-400)" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                                    <Bar dataKey="expense" name="Expenses" fill="var(--accent-400)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                                <AreaChart data={trendData}>
+                                    <defs>
+                                        <linearGradient id="colorTrend" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#E07A5F" stopOpacity={0.2} />
+                                            <stop offset="95%" stopColor="#E07A5F" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(61, 64, 91, 0.06)" />
+                                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#9B9DB3' }} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#9B9DB3' }} />
+                                    <Tooltip content={<WarmTooltip />} />
+                                    <Area type="monotone" dataKey="amount" stroke="#E07A5F" strokeWidth={3}
+                                        fill="url(#colorTrend)"
+                                        dot={{ fill: '#E07A5F', r: 4, strokeWidth: 2, stroke: '#FFFFFF' }}
+                                        activeDot={{ r: 6, stroke: '#E07A5F', strokeWidth: 2, fill: '#FFFFFF' }}
+                                        animationDuration={1500}
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="empty-state">
+                                <div className="empty-state-icon">📉</div>
+                                <h3>No trends available</h3>
+                                <p>Add more transactions over time to see daily patterns emerge.</p>
+                            </div>
+                        )}
+                    </motion.div>
+                </motion.div>
+            )}
+
+            {activeView === 'budget' && (
+                <motion.div variants={containerVariants} initial="hidden" animate="visible">
+                    {/* Budget vs Actual */}
+                    <motion.div variants={cardVariants} className="glass-card-static" style={{ padding: 24 }}>
+                        <h3 className="chart-title" style={{ marginBottom: 18 }}>Budget vs Actual Spending</h3>
+                        {budgetCompareData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={380}>
+                                <BarChart data={budgetCompareData} barGap={4}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(61, 64, 91, 0.06)" />
+                                    <XAxis dataKey="category" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#3D405B' }} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#9B9DB3' }} />
+                                    <Tooltip content={<WarmTooltip />} />
+                                    <Legend wrapperStyle={{ fontSize: '0.82rem', fontWeight: 500 }} />
+                                    <Bar dataKey="budget" name="Budget" fill="#81B29A" radius={[4, 4, 0, 0]} opacity={0.6} animationDuration={1000} />
+                                    <Bar dataKey="spent" name="Spent" fill="#E07A5F" radius={[4, 4, 0, 0]} animationDuration={1200} />
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
                             <div className="empty-state">
-                                <p>Not enough data for trends yet. Keep tracking!</p>
+                                <div className="empty-state-icon">🎯</div>
+                                <h3>No budget data</h3>
+                                <p>Set up your budget to compare planned vs actual spending.</p>
                             </div>
                         )}
-                    </div>
-
-                    <div className="glass-card-static" style={{ padding: '24px' }}>
-                        <h3 className="chart-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.2rem', marginBottom: 24 }}>Spending Flow (Last 6 Months)</h3>
-                        {monthlyTrendData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={300}>
-                                <LineChart data={monthlyTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} dy={10} />
-                                    <YAxis tick={{ fontSize: 12, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} dx={-10} />
-                                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1, strokeDasharray: '4 4' }} />
-                                    <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="income"
-                                        name="Income"
-                                        stroke="#2ed573"
-                                        strokeWidth={2.5}
-                                        dot={{ fill: '#2ed573', r: 5 }}
-                                        activeDot={{ r: 7 }}
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="expense"
-                                        name="Expenses"
-                                        stroke="var(--accent-400)"
-                                        strokeWidth={3}
-                                        dot={{ fill: 'var(--accent-400)', r: 4, strokeWidth: 0 }}
-                                        activeDot={{ r: 6, stroke: 'rgba(255,71,87,0.3)', strokeWidth: 4 }}
-                                    />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="empty-state">
-                                <p>Track for a few months to see trends</p>
-                            </div>
-                        )}
-                    </div>
+                    </motion.div>
                 </motion.div>
             )}
-
-            {/* Budget Tab */}
-            {activeTab === 'budget' && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                    <div className="glass-card-static" style={{ padding: '24px' }}>
-                        <h3 className="chart-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.2rem', marginBottom: 24 }}>Budget vs Actual Spending</h3>
-                        {budgetVsActual.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={400}>
-                                <BarChart data={budgetVsActual} layout="vertical" barGap={6} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-                                    <XAxis type="number" tick={{ fontSize: 12, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} dy={10} />
-                                    <YAxis dataKey="name" type="category" tick={{ fontSize: 12, fill: 'var(--text-primary)', fontWeight: 500 }} axisLine={false} tickLine={false} width={110} dx={-10} />
-                                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
-                                    <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
-                                    <Bar dataKey="budget" name="Budget Limit" fill="rgba(255,255,255,0.1)" radius={[0, 4, 4, 0]} maxBarSize={24} />
-                                    <Bar dataKey="actual" name="Actual Spent" fill="var(--primary-400)" radius={[0, 4, 4, 0]} maxBarSize={24} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="empty-state">
-                                <div className="empty-state-icon">📊</div>
-                                <h3>No budget set</h3>
-                                <p>Set up your budget to see how your spending compares</p>
-                            </div>
-                        )}
-                    </div>
-                </motion.div>
-            )}
-        </div>
+        </motion.div>
     );
 }
 
