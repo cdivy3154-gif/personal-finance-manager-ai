@@ -1,0 +1,12 @@
+{
+    "name": "personal-finance-manager",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Personal Finance Manager for Students - Vercel Deployment",
+    "engines": {
+        "node": ">=18.x"
+    },
+    "dependencies": {
+        "mongoose": "^8.1.1"
+    }
+}
