@@ -79,19 +79,11 @@ function Layout({ children }) {
             <AnimatePresence>
                 {isMobileMenuOpen && (
                     <motion.div
-                        className="sidebar-overlay"
+                        className="sidebar-overlay-bg"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        style={{
-                            position: 'fixed',
-                            inset: 0,
-                            background: 'rgba(61, 64, 91, 0.2)',
-                            backdropFilter: 'blur(4px)',
-                            zIndex: 99,
-                            display: 'none',
-                        }}
                     />
                 )}
             </AnimatePresence>
@@ -133,39 +125,18 @@ function Layout({ children }) {
             {/* Main Content */}
             <main className="main-content">
                 {/* Top Navbar */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
+                <div className="top-bar">
                     <div>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500, letterSpacing: '0.2px' }}>
+                        <p className="top-bar-greeting">
                             {getGreeting()}, Student 👋
                         </p>
-                        <h1 style={{
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '1.85rem',
-                            fontWeight: 700,
-                            letterSpacing: '-0.02em',
-                            marginTop: '4px',
-                            color: 'var(--text-primary)'
-                        }}>
+                        <h1 className="top-bar-title">
                             {getPageTitle()}
                         </h1>
                     </div>
-                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                    <div className="top-bar-actions">
                         {/* Student avatar */}
-                        <div style={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: 'var(--radius-full)',
-                            background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '1.25rem',
-                            color: 'white',
-                            boxShadow: 'var(--shadow-primary)',
-                            cursor: 'pointer',
-                            border: '2.5px solid var(--bg-card)',
-                            transition: 'transform 200ms ease',
-                        }}>
+                        <div className="top-bar-avatar">
                             🎓
                         </div>
                     </div>

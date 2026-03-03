@@ -124,7 +124,7 @@ function BillSplit() {
 
             {/* Bills List */}
             {bills.length > 0 ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: 18 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 18 }}>
                     {bills.map((bill, index) => (
                         <motion.div
                             key={bill._id}

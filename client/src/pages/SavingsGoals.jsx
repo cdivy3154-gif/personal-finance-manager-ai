@@ -125,7 +125,7 @@ function SavingsGoals() {
         return (
             <div>
                 <div className="page-header"><div className="skeleton" style={{ width: 200, height: 28 }} /></div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 18 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 18 }}>
                     {[1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: 260, borderRadius: 20 }} />)}
                 </div>
             </div>
@@ -146,7 +146,7 @@ function SavingsGoals() {
 
             {/* Goals Grid */}
             {goals.length > 0 ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 18 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 18 }}>
                     {goals.map((goal, index) => {
                         const percentage = (goal.targetAmount > 0) ? (goal.currentAmount / goal.targetAmount) * 100 : 0;
                         const color = GOAL_COLORS[index % GOAL_COLORS.length];

@@ -185,10 +185,7 @@ function Dashboard() {
             </motion.div>
 
             {/* Quick Stats — asymmetric grid */}
-            <motion.div variants={cardVariants} className="stats-grid" style={{
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: '18px'
-            }}>
+            <motion.div variants={cardVariants} className="stats-grid">
                 <motion.div
                     className="stat-card income"
                     whileHover={{ y: -5, transition: { type: 'spring', stiffness: 400 } }}

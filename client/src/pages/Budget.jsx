@@ -230,7 +230,7 @@ function Budget() {
             <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.2rem', marginBottom: 18, color: 'var(--text-primary)' }}>
                 Category Budgets
             </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px' }}>
                 {CATEGORIES.map((cat, index) => {
                     const catUtil = utilization?.categories?.find(c => c.category === cat);
                     const config = CATEGORY_CONFIG[cat];
