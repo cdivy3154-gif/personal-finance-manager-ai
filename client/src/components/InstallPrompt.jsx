@@ -87,7 +87,7 @@ function InstallPrompt() {
                     </div>
                     <div style={{ flex: 1 }}>
                         <p style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 2 }}>
-                            Install FinTrack
+                            Install Money Mate
                         </p>
                         <p style={{ fontSize: '0.75rem', opacity: 0.8 }}>
                             Add to home screen for quick access

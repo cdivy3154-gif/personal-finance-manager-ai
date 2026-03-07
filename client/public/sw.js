@@ -1,10 +1,10 @@
 /**
- * Service Worker for FinTrack PWA
+ * Service Worker for Money Mate PWA
  * Implements cache-first strategy for static assets
  * and network-first for API calls
  */
 
-const CACHE_NAME = 'fintrack-v1';
+const CACHE_NAME = 'moneymate-v1';
 const STATIC_ASSETS = [
     '/',
     '/index.html',

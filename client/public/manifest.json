@@ -1,6 +1,6 @@
 {
-    "name": "FinTrack - Student Finance Manager",
-    "short_name": "FinTrack",
+    "name": "Money Mate - Your Smart Expense Partner",
+    "short_name": "Money Mate",
     "description": "Track expenses, manage budgets, and achieve savings goals — built for students",
     "start_url": "/",
     "display": "standalone",

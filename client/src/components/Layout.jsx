@@ -91,10 +91,10 @@ function Layout({ children }) {
             {/* Sidebar */}
             <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
                 <div className="sidebar-header">
-                    <div className="sidebar-logo">F</div>
+                    <img src="/logo.png" alt="Money Mate Logo" className="sidebar-logo-img" style={{ width: '40px', height: '40px', borderRadius: '10px', objectFit: 'cover' }} />
                     <div className="sidebar-brand">
-                        <h1>FinTrack</h1>
-                        <span>Student Finance</span>
+                        <h1>Money Mate</h1>
+                        <span>Smart Expense Partner</span>
                     </div>
                 </div>
 
